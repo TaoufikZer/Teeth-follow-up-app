@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aligned</title>
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Aligned">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@300;400;500&display=swap">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #000000; --ink: #F2F2EF; --dim: #8C8C91; --faint: #3B3B40; --line: #1D1D21; --raise: #111114;
+  --amber: #F5A524; --red: #FF5A4E;
+  --sans: "Geist", "Inter", -apple-system, system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --st: env(safe-area-inset-top, 0px); --sbm: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); }
+body { font-family: var(--sans); font-size: 15px; line-height: 1.45; overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
+
+#app { height: 100%; max-width: 520px; margin: 0 auto; display: flex; flex-direction: column; position: relative; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+@media (max-width: 540px) { #app { border: 0; } }
+.scr { flex: 1; overflow-y: auto; overflow-x: hidden; padding-top: calc(var(--st) + 14px); -webkit-overflow-scrolling: touch; }
+.pad { padding-left: max(22px, env(safe-area-inset-left, 0px)); padding-right: max(22px, env(safe-area-inset-right, 0px)); }
+.meta { font: 400 11px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.meta b { color: var(--ink); font-weight: 500; }
+.sec { padding-block: 18px; display: grid; gap: 14px; border-top: 1px solid var(--line); }
+.sec-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.giant { font: 300 clamp(76px, 26vw, 112px)/0.92 var(--sans); letter-spacing: -0.06em; font-variant-numeric: tabular-nums; }
+.giant small { font-size: 26px; letter-spacing: 0; color: var(--dim); margin-left: 6px; font-weight: 400; }
+.sub { font-size: 14px; color: var(--dim); }
+.sub b { color: var(--ink); font-weight: 500; }
+.amber { color: var(--amber) !important; }
+.red { color: var(--red) !important; }
+.btn { display: flex; width: 100%; justify-content: space-between; align-items: center; min-height: 58px; padding: 0 20px; background: var(--ink); color: var(--bg); font: 500 13px var(--mono); letter-spacing: .14em; text-transform: uppercase; border-radius: 2px; }
+.btn:active { opacity: .8; }
+.btn.line { background: transparent; color: var(--ink); border: 1px solid var(--faint); }
+.btn.sm { min-height: 44px; justify-content: center; }
+.btn.danger { background: transparent; color: var(--red); border: 1px solid var(--faint); justify-content: center; }
+.link { font: 500 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); padding: 6px 0; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; }
+.grid2 > div { padding: 16px 22px; display: grid; gap: 6px; border-top: 1px solid var(--line); }
+.grid2 > div:nth-child(odd) { border-right: 1px solid var(--line); }
+.kv { font: 400 22px/1 var(--mono); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.kv span { color: var(--dim); font-size: 14px; }
+.row { display: grid; grid-template-columns: 52px minmax(0,1fr) auto; gap: 14px; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--line); font-size: 14px; width: 100%; text-align: left; }
+.row:first-child { border-top: 0; padding-top: 0; }
+.empty { color: var(--dim); font-size: 14px; }
+
+.tabs { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line); padding: 0 6px calc(var(--sbm) + 8px); background: var(--bg); }
+.tabs button { font: 500 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--faint); text-align: center; padding: 14px 0 10px; border-top: 2px solid transparent; margin-top: -1px; }
+.tabs button[aria-current="page"] { color: var(--ink); border-top-color: var(--ink); }
+
+.box { width: 16px; height: 16px; border: 1px solid var(--dim); flex: none; margin-top: 2px; display: grid; place-items: center; appearance: none; -webkit-appearance: none; border-radius: 0; cursor: pointer; }
+.box:checked { background: var(--ink); border-color: var(--ink); }
+.box:checked::after { content: ""; width: 7px; height: 3px; border-left: 1.5px solid var(--bg); border-bottom: 1.5px solid var(--bg); transform: rotate(-45deg) translate(1px,-1px); }
+.chk { display: flex; gap: 12px; font-size: 14px; line-height: 1.45; align-items: flex-start; }
+.chk label { flex: 1; cursor: pointer; }
+.chk.done label { color: var(--faint); text-decoration: line-through; }
+.chk .x { color: var(--faint); font: 400 14px var(--mono); padding: 0 4px; }
+
+/* 24h band */
+.band { position: relative; height: 36px; background: var(--ink); }
+.band .gap { position: absolute; top: 0; bottom: 0; background: var(--amber); min-width: 2px; }
+.band .fut { position: absolute; top: 0; bottom: 0; right: 0; background: repeating-linear-gradient(90deg, var(--faint) 0 1px, transparent 1px 5px); background-color: var(--bg); border: 1px solid var(--faint); border-left: 0; }
+.band .now { position: absolute; top: -8px; bottom: -8px; width: 1px; background: var(--ink); }
+.band .now::before { content: ""; position: absolute; top: 0; left: -3px; width: 7px; height: 7px; background: var(--ink); }
+.band-tags { position: relative; height: 14px; }
+.band-tags span, .axis span { position: absolute; transform: translateX(-50%); font: 400 9.5px var(--mono); letter-spacing: .06em; color: var(--dim); white-space: nowrap; }
+.band-tags span { color: var(--amber); }
+.axis { position: relative; height: 12px; }
+.axis span.l { transform: none; } .axis span.r { transform: translateX(-100%); }
+
+/* week */
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; height: 96px; position: relative; }
+.week .goal { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--faint); }
+.week .goal span { position: absolute; left: 0; top: -14px; font: 400 9.5px var(--mono); color: var(--dim); }
+.week .c { display: grid; gap: 4px; justify-items: center; align-self: end; z-index: 1; }
+.week i { display: block; width: 100%; background: var(--ink); }
+.week i.low { background: var(--amber); }
+.week .c.t i { background: repeating-linear-gradient(135deg, var(--ink) 0 2px, transparent 2px 5px); outline: 1px solid var(--ink); outline-offset: -1px; }
+.week .c em { font: normal 400 9.5px var(--mono); color: var(--dim); }
+.week-x { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; font: 400 9.5px var(--mono); color: var(--dim); text-align: center; letter-spacing: .08em; text-transform: uppercase; }
+
+.budget { display: flex; height: 10px; gap: 2px; background: var(--faint); }
+.budget i { display: block; height: 100%; }
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--faint); }
+.seg button { font: 500 10.5px var(--mono); letter-spacing: .1em; text-align: center; padding: 12px 0; color: var(--dim); border-left: 1px solid var(--faint); text-transform: uppercase; }
+.seg button:first-child { border-left: 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+
+/* trays */
+.ticks { display: grid; gap: 2px; align-items: end; height: 54px; }
+.ticks i { display: block; height: 26px; background: var(--faint); }
+.ticks i.d { background: var(--ink); }
+.ticks i.c { height: 54px; background: var(--ink); }
+.tt { display: grid; grid-template-columns: 34px 100px 40px minmax(0,1fr); gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 13px; align-items: baseline; width: 100%; text-align: left; }
+.tt.done { color: var(--dim); }
+.tt.fut { color: var(--faint); }
+.tt .note { color: var(--dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tt.cur .note { color: var(--ink); }
+
+/* photos */
+.cmp { position: relative; aspect-ratio: 4/3; overflow: hidden; background: var(--raise); touch-action: pan-y; }
+.cmp img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cmp .r { clip-path: inset(0 0 0 var(--split, 50%)); }
+.cmp .split { position: absolute; top: 0; bottom: 0; left: var(--split, 50%); width: 1px; background: var(--ink); pointer-events: none; }
+.cmp .split::after { content: ""; position: absolute; top: 50%; left: -14px; width: 28px; height: 28px; border: 1px solid var(--ink); background: var(--bg); transform: translateY(-50%); }
+.cmp .tag { position: absolute; bottom: 10px; font: 500 10px var(--mono); letter-spacing: .1em; background: var(--bg); padding: 4px 7px; }
+.cmp input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; margin: 0; cursor: ew-resize; }
+.cmp-empty { aspect-ratio: 4/3; border: 1px dashed var(--faint); display: grid; place-items: center; text-align: center; padding: 24px; }
+.frames { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; }
+.fr { aspect-ratio: 3/4; position: relative; overflow: hidden; border: 1px solid var(--faint); display: block; width: 100%; }
+.fr img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.fr.empty { background:
+  linear-gradient(var(--faint), var(--faint)) center/1px 26px no-repeat,
+  linear-gradient(var(--faint), var(--faint)) center/26px 1px no-repeat; }
+.fr.empty::before, .fr.empty::after { content: ""; position: absolute; width: 12px; height: 12px; border-color: var(--dim); border-style: solid; }
+.fr.empty::before { top: 8px; left: 8px; border-width: 1px 0 0 1px; }
+.fr.empty::after { bottom: 8px; right: 8px; border-width: 0 1px 1px 0; }
+.fr .cap { position: absolute; left: 6px; bottom: 6px; font: 500 9.5px var(--mono); letter-spacing: .1em; background: var(--bg); padding: 3px 5px; text-transform: uppercase; }
+.fr.empty .cap { left: 50%; bottom: 10px; transform: translateX(-50%); background: none; color: var(--dim); white-space: nowrap; }
+
+/* ortho */
+.sev { display: grid; grid-template-columns: repeat(5, 8px); gap: 2px; }
+.sev i { height: 12px; background: var(--faint); }
+.sev i.on { background: var(--amber); }
+.sev.hi i.on { background: var(--red); }
+.tl { display: grid; grid-template-columns: 12px minmax(0,1fr); gap: 0 14px; }
+.tl .rail { position: relative; }
+.tl .rail::before { content: ""; position: absolute; left: 5px; top: 6px; bottom: -6px; width: 1px; background: var(--faint); }
+.tl .rail::after { content: ""; position: absolute; left: 1px; top: 4px; width: 9px; height: 9px; background: var(--ink); }
+.tl .rail.next::after { background: var(--bg); border: 1px solid var(--ink); }
+.tl .rail.last::before { display: none; }
+.tl .body { padding-bottom: 18px; display: grid; gap: 4px; font-size: 14px; line-height: 1.45; text-align: left; }
+
+/* setup / forms */
+.set { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); align-items: center; font-size: 14px; }
+.set:first-child { border-top: 0; padding-top: 0; }
+.set small { display: block; color: var(--dim); font-size: 12px; margin-top: 2px; }
+.set input, .set select { width: 150px; text-align: right; }
+input, select, textarea { background: var(--raise); border: 1px solid var(--faint); border-radius: 2px; padding: 10px 12px; font-family: var(--mono); font-size: 16px; min-width: 0; }
+textarea { width: 100%; min-height: 80px; resize: vertical; font-family: var(--sans); }
+.field { display: grid; gap: 6px; }
+.field input, .field select { width: 100%; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 500 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--faint); padding: 9px 12px; color: var(--dim); }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* sheet / banner */
+.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 20; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 520px; margin: 0 auto; z-index: 21; background: #0B0B0D; border-top: 1px solid var(--faint); padding: 20px max(22px, env(safe-area-inset-right, 0px)) calc(var(--sbm) + 22px) max(22px, env(safe-area-inset-left, 0px)); display: grid; gap: 16px; max-height: 88%; overflow-y: auto; animation: up .2s ease-out; }
+.sheet h2 { margin: 0; font: 400 24px/1.1 var(--sans); letter-spacing: -0.02em; }
+.sheet .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sheet img.full { width: 100%; display: block; }
+@keyframes up { from { transform: translateY(24px); opacity: 0; } }
+.banner { position: fixed; top: calc(var(--st) + 8px); left: 10px; right: 10px; max-width: 500px; margin: 0 auto; z-index: 30; background: #1A1A1D; border-radius: 14px; padding: 12px 14px; display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 10px; animation: drop .25s ease-out; box-shadow: 0 10px 30px rgba(0,0,0,.6); }
+.banner .ic { width: 34px; height: 34px; border-radius: 8px; background: var(--ink); color: var(--bg); display: grid; place-items: center; font: 600 15px var(--mono); }
+.banner b { font-size: 13px; font-weight: 600; display: block; }
+.banner p { margin: 2px 0 0; font-size: 13px; color: var(--dim); }
+@keyframes drop { from { transform: translateY(-16px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+
+/* onboarding */
+.onb { display: grid; gap: 22px; padding-bottom: 32px; }
+.onb h1 { font: 300 52px/0.95 var(--sans); letter-spacing: -0.05em; margin: 0; }
+</style>
+</head>
+<body>
+<div id="app">
+  <main class="scr" id="scr"></main>
+  <nav class="tabs" id="tabs" hidden></nav>
+</div>
+<div id="overlay"></div>
+<div id="bannerSlot"></div>
+
+<script>
+(function () {
+"use strict";
+// ---------------- storage ----------------
+const KEY = "aligned-v1";
+const DEF = () => ({
+  plan: null,                       // {total, days, start:'YYYY-MM-DD', goal, swapTime:'21:30'}
+  outs: [],                         // {id, s, e|null, why}
+  trayNotes: {}, checklist: {},     // per tray
+  appt: null,                       // {date, time, what}
+  questions: [], symptoms: [], visits: [],
+  rem: { outMin: 30 },
+  since: null,                      // first day the app was used
+});
+let S;
+try { S = Object.assign(DEF(), JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (_) { S = DEF(); }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (_) { banner("Storage full", "Could not save. Export a backup from Setup."); } };
+
+// photos in IndexedDB
+const PH = {};
+const idb = (() => {
+  let p;
+  const open = () => p || (p = new Promise((res, rej) => {
+    const r = indexedDB.open("aligned-photos", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("p");
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const tx = (mode, fn) => open().then(db => new Promise((res, rej) => {
+    const t = db.transaction("p", mode), st = t.objectStore("p"), out = fn(st);
+    t.oncomplete = () => res(out && out.result); t.onerror = () => rej(t.error);
+  }));
+  return {
+    set: (k, v) => tx("readwrite", s => s.put(v, k)),
+    del: k => tx("readwrite", s => s.delete(k)),
+    clear: () => tx("readwrite", s => s.clear()),
+    all: () => open().then(db => new Promise((res, rej) => {
+      const out = {}, t = db.transaction("p"), c = t.objectStore("p").openCursor();
+      c.onsuccess = () => { const cur = c.result; if (cur) { out[cur.key] = cur.value; cur.continue(); } else res(out); };
+      c.onerror = () => rej(c.error);
+    })),
+  };
+})();
+
+// ---------------- time helpers ----------------
+const MIN = 60000, HOUR = 3600000, DAYMS = 86400000;
+const pad = n => String(n).padStart(2, "0");
+const now = () => Date.now();
+const sod = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const addDays = (t, n) => { const d = new Date(t); d.setDate(d.getDate() + n); return d.getTime(); };
+const dayDiff = (a, b) => Math.round((sod(b) - sod(a)) / DAYMS);
+const parseD = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).getTime(); };
+const isoD = t => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const hhmm = t => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const atTime = (day, hm) => { const [h, m] = hm.split(":").map(Number); const d = new Date(day); d.setHours(h, m, 0, 0); return d.getTime(); };
+const fd = (t, o) => new Date(t).toLocaleDateString(undefined, o);
+const hmClock = ms => { const neg = ms < 0; ms = Math.abs(ms); const m = Math.floor(ms / MIN); return (neg ? "−" : "") + Math.floor(m / 60) + ":" + pad(m % 60); };
+const dur = ms => { const m = Math.max(0, Math.round(ms / MIN)); return m < 60 ? m + "m" : Math.floor(m / 60) + "h " + pad(m % 60) + "m"; };
+const timer = ms => { const s = Math.max(0, Math.floor(ms / 1000)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return (h ? h + ":" + pad(m) : m) + ":" + pad(s % 60); };
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
+
+// ---------------- derived ----------------
+const openOut = () => S.outs.find(o => o.e == null);
+const overlap = (o, a, b) => Math.max(0, Math.min(o.e == null ? now() : o.e, b) - Math.max(o.s, a));
+const outOn = day => S.outs.reduce((acc, o) => acc + overlap(o, day, addDays(day, 1)), 0);
+const dayLen = day => addDays(day, 1) - day;
+const budget = () => (24 - S.plan.goal) * HOUR;
+const startT = () => parseD(S.plan.start);
+const dataT = () => Math.max(startT(), S.since ? parseD(S.since) : startT());
+function trayOn(t) {
+  const d = dayDiff(startT(), t);
+  if (d < 0) return 0;
+  return Math.floor(d / S.plan.days) + 1;
+}
+const trayStart = n => addDays(startT(), (n - 1) * S.plan.days);
+function wornOn(day) { return (dayLen(day) - outOn(day)) / HOUR; }  // full past day
+function streak() {
+  let n = 0, d = addDays(sod(now()), -1);
+  while (d >= dataT() && wornOn(d) >= S.plan.goal) { n++; d = addDays(d, -1); }
+  return n;
+}
+function trayAvg(n) {
+  const a = trayStart(n), today = sod(now()); let sum = 0, c = 0;
+  for (let i = 0; i < S.plan.days; i++) { const d = addDays(a, i); if (d >= today) break; if (d < dataT()) continue; sum += wornOn(d); c++; }
+  return c ? (sum / c).toFixed(1) : "—";
+}
+
+// ---------------- UI shell ----------------
+const $ = s => document.querySelector(s);
+let tab = "today", why = "Meal";
+const TABS = [["today", "Today"], ["trays", "Trays"], ["photos", "Photos"], ["ortho", "Ortho"], ["setup", "Setup"]];
+
+function render(keep) {
+  const sc = $("#scr"), top = sc.scrollTop;
+  if (!S.plan) { $("#tabs").hidden = true; sc.innerHTML = vOnboard(); return; }
+  $("#tabs").hidden = false;
+  sc.innerHTML = V[tab]();
+  $("#tabs").innerHTML = TABS.map(([k, l]) => `<button type="button" data-act="tab" data-k="${k}" ${k === tab ? 'aria-current="page"' : ""}>${l}</button>`).join("");
+  sc.scrollTop = keep ? top : 0;
+}
+
+let bTimer;
+function banner(title, text) {
+  const el = $("#bannerSlot");
+  el.innerHTML = `<div class="banner" role="status"><div class="ic">A</div><div><b>${esc(title)}</b><p>${esc(text)}</p></div></div>`;
+  clearTimeout(bTimer); bTimer = setTimeout(() => { el.innerHTML = ""; }, 4500);
+}
+
+// ---------------- views ----------------
+function vOnboard() {
+  return `<div class="pad onb">
+    <div class="meta">Aligned · setup</div>
+    <h1>Your Invisalign plan</h1>
+    <p class="sub">Copy these from your orthodontist's instructions. You can change them later in Setup.</p>
+    <form id="onbForm" style="display:grid;gap:16px">
+      <div class="field"><label class="meta" for="o-total">Number of trays</label><input id="o-total" type="number" inputmode="numeric" min="1" max="99" required placeholder="e.g. 24"></div>
+      <div class="field"><label class="meta" for="o-days">Days per tray</label><select id="o-days">${[5, 7, 10, 14].map(d => `<option ${d === 7 ? "selected" : ""}>${d}</option>`).join("")}</select></div>
+      <div class="field"><label class="meta" for="o-start">Tray 1 started on</label><input id="o-start" type="date" required value="${isoD(now())}"></div>
+      <div class="field"><label class="meta" for="o-goal">Daily wear goal</label><select id="o-goal">${[20, 21, 22].map(g => `<option value="${g}" ${g === 22 ? "selected" : ""}>${g} hours</option>`).join("")}</select></div>
+      <button class="btn" type="submit"><span>Start tracking</span><span>→</span></button>
+    </form>
+    <p class="sub" style="font-size:12px">Everything stays on this phone. No account.</p>
+  </div>`;
+}
+
+function vToday() {
+  const t = now(), day = sod(t), o = openOut(), out = outOn(day), b = budget(), left = b - out;
+  const n = trayOn(t), total = S.plan.total, done = n > total;
+  const dIn = done ? 0 : dayDiff(trayStart(n), t) + 1;
+  const elapsed = t - day, len = dayLen(day);
+  const head = `<div class="pad meta" style="padding-bottom:22px">${fd(t, { weekday: "short", day: "numeric", month: "short" })} · ${n === 0 ? "Starts " + fd(startT(), { day: "numeric", month: "short" }) : done ? "<b>Treatment done</b>" : `<b>Tray ${pad(n)}</b> · Day ${dIn}/${S.plan.days}`}</div>`;
+
+  let hero;
+  if (o) {
+    const since = t - o.s, todays = S.outs.filter(x => overlap(x, day, day + len) > 0);
+    const segs = todays.map(x => { const w = overlap(x, day, day + len) / b * 100; return `<i style="width:${Math.min(100, w)}%;background:${x === o ? "var(--amber)" : "var(--dim)"}"></i>`; }).join("");
+    hero = `<div class="pad" style="display:grid;gap:22px;padding-bottom:24px">
+      <div class="meta"><span class="amber">● Trays out</span> · since ${hhmm(o.s)}</div>
+      <div class="giant amber">${timer(since)}</div>
+      <div style="display:grid;gap:10px">
+        <div class="budget">${segs}</div>
+        <div class="meta" style="display:flex;justify-content:space-between"><span>Used <b>${hmClock(out)}</b></span><span>${hmClock(b)}</span></div>
+        <div class="sub">${left >= 0 ? `<b>${dur(left)}</b> left before today drops under ${S.plan.goal}h.` : `<b class="red">${dur(-left)}</b> over. Today is under ${S.plan.goal}h.`}</div>
+      </div>
+    </div>
+    <div class="sec pad"><span class="meta">Out for</span>
+      <div class="seg">${["Meal", "Snack", "Drink", "Clean"].map(w => `<button type="button" data-act="why" data-v="${w}" aria-pressed="${o.why === w}">${w}</button>`).join("")}</div>
+    </div>
+    <div class="sec pad" style="padding-bottom:24px">
+      <button class="btn" type="button" data-act="toggle"><span>Trays back in</span><span>↵</span></button>
+      <div class="meta" style="text-align:center">Brush first · water is fine with trays in</div>
+    </div>`;
+  } else {
+    const nowPct = elapsed / len * 100;
+    const todays = S.outs.filter(x => overlap(x, day, day + len) > 0);
+    const gaps = todays.map(x => { const a = Math.max(x.s, day) - day; return `<div class="gap" style="left:${a / len * 100}%;width:${overlap(x, day, day + len) / len * 100}%"></div>`; }).join("");
+    const tags = todays.map(x => { const a = Math.max(x.s, day) - day, w = overlap(x, day, day + len); return `<span style="left:${(a + w / 2) / len * 100}%">${dur(w)}</span>`; }).join("");
+    const nowLbl = nowPct > 12 && nowPct < 88 ? `<span style="left:${nowPct}%;color:var(--ink)">${hhmm(t)}</span>` : "";
+    hero = `<div class="pad" style="display:grid;gap:22px;padding-bottom:24px">
+      <div style="display:grid;gap:10px">
+        <div class="meta">Out-time left today</div>
+        <div class="giant ${left < 0 ? "red" : ""}">${hmClock(left)}<small>h</small></div>
+        <div class="sub">of ${hmClock(b)} allowed · goal <b>${S.plan.goal}h</b> worn</div>
+      </div>
+      <div style="display:grid;gap:6px">
+        <div class="band-tags">${tags}</div>
+        <div class="band">${gaps}<div class="fut" style="left:${nowPct}%"></div><div class="now" style="left:${nowPct}%"></div></div>
+        <div class="axis"><span class="l" style="left:0">00</span><span style="left:25%">06</span><span style="left:50%">12</span><span style="left:75%">18</span>${nowLbl}<span class="r" style="left:100%">24</span></div>
+      </div>
+    </div>`;
+  }
+
+  // stats
+  const st = streak(), worn = elapsed - out, proj = len - out;
+  let next = "—", nextSub = "";
+  if (n >= 1 && n < total) { const sd = trayStart(n + 1); next = fd(sd, { weekday: "short" }); nextSub = fd(sd, { day: "numeric" }); }
+  else if (n === 0) { next = fd(startT(), { weekday: "short" }); nextSub = fd(startT(), { day: "numeric" }); }
+  const stats = `<div class="grid2">
+    <div><span class="meta">Worn so far</span><span class="kv">${hmClock(worn)}</span></div>
+    <div><span class="meta">Projected</span><span class="kv ${proj / HOUR < S.plan.goal ? "amber" : ""}">${hmClock(proj)}</span></div>
+    <div><span class="meta">Streak</span><span class="kv">${pad(st)} <span>days</span></span></div>
+    <div><span class="meta">${n === 0 ? "Tray 1" : "Next swap"}</span><span class="kv">${next} <span>${nextSub}</span></span></div>
+  </div>`;
+
+  const outBtn = o ? "" : `<div class="sec pad" style="padding-top:16px;padding-bottom:20px"><button class="btn" type="button" data-act="toggle"><span>Trays out</span><span>→</span></button></div>`;
+
+  // week
+  const days = []; for (let i = 6; i >= 0; i--) days.push(addDays(day, -i));
+  const H = 70, y = v => Math.max(2, (Math.min(24, Math.max(18, v)) - 18) / 6 * H);
+  let sum = 0, cnt = 0;
+  const cols = days.map(d => {
+    if (d < dataT()) return `<div class="c"><em>—</em></div>`;
+    const isT = d === day, v = isT ? proj / HOUR : wornOn(d);
+    if (!isT) { sum += v; cnt++; }
+    return `<div class="c ${isT ? "t" : ""}"><em>${v.toFixed(1)}</em><i class="${!isT && v < S.plan.goal ? "low" : ""}" style="height:${y(v)}px"></i></div>`;
+  }).join("");
+  const week = `<div class="sec pad">
+    <div class="sec-h"><span class="meta">Last 7 days</span><span class="meta">${cnt ? `avg <b>${(sum / cnt).toFixed(1)}h</b> · ` : ""}goal ${S.plan.goal}h</span></div>
+    <div class="week"><div class="goal" style="bottom:${y(S.plan.goal) + 17}px"></div>${cols}</div>
+    <div class="week-x">${days.map(d => `<span style="${d === day ? "color:var(--ink)" : ""}">${fd(d, { weekday: "narrow" })}</span>`).join("")}</div>
+  </div>`;
+
+  // log
+  const todays = S.outs.filter(x => overlap(x, day, day + len) > 0).sort((a, b2) => a.s - b2.s);
+  const log = `<div class="sec pad">
+    <div class="sec-h"><span class="meta">Out log · today</span><button class="link" type="button" data-act="addOut">+ Add</button></div>
+    <div>${todays.length ? todays.map(x => { const d2 = overlap(x, day, day + len); return `<button class="row" type="button" data-act="editOut" data-id="${x.id}"><span class="n meta">${hhmm(x.s)}</span><span>${esc(x.why)}${x.e == null ? ' <span class="amber">· now</span>' : ""}</span><span class="n ${d2 > S.rem.outMin * MIN ? "amber" : ""}">${dur(d2)}</span></button>`; }).join("") : '<p class="empty" style="margin:0">Nothing logged yet. Tap Trays out when you take them out.</p>'}</div>
+  </div>`;
+
+  return head + hero + stats + outBtn + week + log + '<div style="height:20px"></div>';
+}
+
+function vTrays() {
+  const t = now(), n = trayOn(t), total = S.plan.total;
+  let hero;
+  if (n === 0) {
+    hero = `<div style="display:grid;gap:10px"><div class="meta">Tray 01 starts</div><div class="giant" style="font-size:clamp(64px,20vw,92px)">D–${dayDiff(t, startT())}</div><div class="sub">${fd(startT(), { weekday: "long", day: "numeric", month: "long" })}</div></div>`;
+  } else if (n >= total) {
+    const end = trayStart(total + 1);
+    hero = n > total
+      ? `<div style="display:grid;gap:10px"><div class="meta">Plan complete</div><div class="giant" style="font-size:clamp(64px,20vw,92px)">Done</div><div class="sub">All ${total} trays finished. Ask your orthodontist about refinements or retainers, then update the plan in Setup.</div></div>`
+      : `<div style="display:grid;gap:10px"><div class="meta">Last tray · ends ${fd(end, { day: "numeric", month: "short" })}</div><div class="giant" style="font-size:clamp(64px,20vw,92px)">${countdown(atTime(end, S.plan.swapTime) - t)}</div><div class="sub">Tray <b>${pad(total)}</b> of ${total}.</div></div>`;
+  } else {
+    const swapAt = atTime(trayStart(n + 1), S.plan.swapTime);
+    const ms = swapAt - t;
+    hero = `<div style="display:grid;gap:10px">
+      <div class="meta">Next swap · ${fd(swapAt, { weekday: "short", day: "numeric", month: "short" })}, ${S.plan.swapTime}</div>
+      <div class="giant" style="font-size:clamp(64px,20vw,92px)">${ms > 0 ? countdown(ms) : "Tonight"}</div>
+      <div class="sub">Tray <b>${pad(n + 1)}</b> goes in before bed. Keep ${pad(n)} as a backup.</div>
+    </div>`;
+  }
+  const pct = Math.min(100, Math.max(0, Math.round(n === 0 ? 0 : ((n - 1) + (dayDiff(trayStart(Math.min(n, total)), t) + 1) / S.plan.days) / total * 100)));
+  const ticks = Array.from({ length: total }, (_, i) => `<i class="${i + 1 < n ? "d" : i + 1 === n ? "c" : ""}"></i>`).join("");
+  const end = trayStart(total + 1);
+
+  const cur = Math.min(Math.max(n, 1), total);
+  const CL = ["Brush and floss", "Photos: front, left, right", "Old tray into the case", "Chewies, 5 min × 3 tomorrow"];
+  const cl = S.checklist[cur] || [];
+  const checklist = n >= 1 && n <= total ? `<div class="sec pad">
+      <div class="sec-h"><span class="meta">Swap night · tray ${pad(Math.min(cur + 1, total))}</span><span class="meta">${cl.filter(Boolean).length} / ${CL.length}</span></div>
+      <div style="display:grid;gap:12px">${CL.map((c, i) => `<div class="chk ${cl[i] ? "done" : ""}"><input class="box" type="checkbox" id="cl-${i}" data-act="cl" data-i="${i}" ${cl[i] ? "checked" : ""}><label for="cl-${i}">${c}</label></div>`).join("")}</div>
+    </div>` : "";
+
+  const rows = Array.from({ length: total }, (_, i) => {
+    const k = i + 1, a = trayStart(k), b = addDays(a, S.plan.days - 1);
+    const cls = k < n ? "done" : k === n ? "cur" : "fut";
+    const avg = k <= n ? trayAvg(k) : "—";
+    return `<button class="tt ${cls}" type="button" data-act="tray" data-n="${k}"><span class="n">T${pad(k)}</span><span class="n">${fd(a, { day: "2-digit" })}–${fd(b, { day: "2-digit", month: "short" })}</span><span class="n">${avg}</span><span class="note">${esc(S.trayNotes[k] || "")}</span></button>`;
+  }).join("");
+
+  return `<div class="pad" style="display:grid;gap:22px;padding-bottom:22px">
+      <div class="meta">Plan · <b>${total} trays</b> × ${S.plan.days} days</div>
+      ${hero}
+      <div style="display:grid;gap:8px">
+        <div class="ticks" style="grid-template-columns:repeat(${total},1fr)">${ticks}</div>
+        <div class="meta" style="display:flex;justify-content:space-between"><span>${fd(startT(), { day: "numeric", month: "short" })}</span><span><b>${pct}%</b></span><span>Est. ${fd(end, { day: "numeric", month: "short", year: "numeric" })}</span></div>
+      </div>
+    </div>
+    ${checklist}
+    <div class="sec pad" style="gap:0">
+      <div class="sec-h" style="padding-bottom:10px"><span class="meta">All trays · tap to add a note</span><span class="meta">Avg h</span></div>
+      ${rows}
+    </div><div style="height:20px"></div>`;
+}
+function countdown(ms) { const h = Math.floor(ms / HOUR), d = Math.floor(h / 24); return d ? `${d}d ${pad(h % 24)}h` : `${h}h ${pad(Math.floor(ms % HOUR / MIN))}m`; }
+
+function vPhotos() {
+  const n = Math.min(Math.max(trayOn(now()), 1), S.plan.total);
+  const fronts = []; for (let k = 1; k <= n; k++) if (PH[`${k}-front`]) fronts.push(k);
+  let cmp;
+  if (fronts.length >= 2) {
+    const a = fronts[0], b = fronts[fronts.length - 1];
+    cmp = `<div class="cmp" id="cmp" style="--split:50%">
+      <img src="${PH[`${a}-front`]}" alt="Tray ${a} front">
+      <img class="r" src="${PH[`${b}-front`]}" alt="Tray ${b} front">
+      <div class="split"></div>
+      <span class="tag" style="left:10px">T${pad(a)}</span><span class="tag" style="right:10px">T${pad(b)}</span>
+      <input type="range" min="0" max="100" value="50" data-act="split" aria-label="Compare before and after">
+    </div><div class="sub">Drag to compare. Same spot, same light, lips back.</div>`;
+  } else {
+    cmp = `<div class="cmp-empty"><div class="sub">Take a <b>front</b> photo on two different trays to compare them here.</div></div>`;
+  }
+  const rows = [];
+  for (let k = n; k >= 1; k--) {
+    const views = ["front", "left", "right"], miss = views.filter(v => !PH[`${k}-${v}`]).length;
+    rows.push(`<div class="sec pad">
+      <div class="sec-h"><span class="meta"><b>T${pad(k)}</b> · ${fd(trayStart(k), { day: "numeric", month: "short" })}</span><span class="meta ${miss && k === n ? "amber" : ""}">${miss ? miss + " to take" : "3 / 3"}</span></div>
+      <div class="frames">${views.map(v => {
+        const src = PH[`${k}-${v}`], id = `ph-${k}-${v}`;
+        return src
+          ? `<button type="button" class="fr" data-act="viewPh" data-k="${k}-${v}"><img src="${src}" alt="Tray ${k} ${v}"><span class="cap">${v}</span></button>`
+          : `<label class="fr empty" for="${id}"><span class="cap">+ ${v}</span><input id="${id}" type="file" accept="image/*" data-act="photo" data-k="${k}-${v}" hidden></label>`;
+      }).join("")}</div></div>`);
+  }
+  return `<div class="pad" style="display:grid;gap:14px;padding-bottom:22px"><div class="meta">Progress · front view</div>${cmp}</div>${rows.join("")}<div style="height:20px"></div>`;
+}
+
+function vOrtho() {
+  const t = now();
+  let appt;
+  if (S.appt) {
+    const at = atTime(parseD(S.appt.date), S.appt.time || "09:00"), dd = dayDiff(t, at);
+    appt = `<button type="button" data-act="appt" style="display:grid;gap:10px;text-align:left;width:100%">
+      <div class="meta">Next visit · tap to edit</div>
+      <div class="giant">${dd > 0 ? "D–" + dd : dd === 0 ? "Today" : "Done"}</div>
+      <div class="sub"><b>${fd(at, { weekday: "short", day: "numeric", month: "short" })}, ${esc(S.appt.time)}</b>${S.appt.what ? "<br>" + esc(S.appt.what) : ""}</div></button>`;
+  } else {
+    appt = `<div class="meta">Next visit</div><button class="btn line" type="button" data-act="appt"><span>Add appointment</span><span>+</span></button>`;
+  }
+  const open = S.questions.filter(q => !q.d).length;
+  const qs = S.questions.map(q => `<div class="chk ${q.d ? "done" : ""}"><input class="box" type="checkbox" id="q-${q.id}" data-act="q" data-id="${q.id}" ${q.d ? "checked" : ""}><label for="q-${q.id}">${esc(q.t)}</label><button class="x" type="button" data-act="delQ" data-id="${q.id}" aria-label="Delete question">✕</button></div>`).join("");
+  const sy = S.symptoms.slice().sort((a, b) => b.date.localeCompare(a.date)).map(s => `<button class="row" type="button" data-act="editSym" data-id="${s.id}"><span class="n meta">${fd(parseD(s.date), { day: "2-digit", month: "short" })}</span><span>${esc(s.type)}${s.note ? ` <span style="color:var(--dim)">· ${esc(s.note)}</span>` : ""}</span><span class="sev ${s.sev >= 4 ? "hi" : ""}">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= s.sev ? "on" : ""}"></i>`).join("")}</span></button>`).join("");
+  const vis = S.visits.slice().sort((a, b) => b.date.localeCompare(a.date));
+  const tl = vis.map((v, i) => `<div class="rail ${i === vis.length - 1 ? "last" : ""}"></div><button class="body" type="button" data-act="editVisit" data-id="${v.id}"><span class="meta"><b>${fd(parseD(v.date), { day: "2-digit", month: "short", year: "numeric" })}</b>${v.tags.length ? " · " + v.tags.map(esc).join(" · ") : ""}</span>${v.note ? `<span>${esc(v.note)}</span>` : ""}</button>`).join("");
+
+  return `<div class="pad" style="display:grid;gap:10px;padding-bottom:22px">${appt}</div>
+    <div class="sec pad">
+      <div class="sec-h"><span class="meta">Ask at the visit</span><span class="meta"><b>${open}</b> open</span></div>
+      <div style="display:grid;gap:12px">${qs || '<p class="empty" style="margin:0">Write questions down as they come up.</p>'}</div>
+      <form id="qForm" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px"><input id="qIn" placeholder="Add a question" autocomplete="off" style="font-family:var(--sans)"><button class="btn sm" type="submit" style="width:auto;padding:0 16px">Add</button></form>
+    </div>
+    <div class="sec pad">
+      <div class="sec-h"><span class="meta">Symptoms</span><button class="link" type="button" data-act="addSym">+ Log</button></div>
+      <div>${sy || '<p class="empty" style="margin:0">Soreness, rubbing, a loose attachment. Log it with the date so you can tell your orthodontist.</p>'}</div>
+    </div>
+    <div class="sec pad">
+      <div class="sec-h"><span class="meta">Visits</span><button class="link" type="button" data-act="addVisit">+ Add</button></div>
+      ${tl ? `<div class="tl">${tl}</div>` : '<p class="empty" style="margin:0">What was done at each visit: attachments, IPR, scans.</p>'}
+    </div><div style="height:20px"></div>`;
+}
+
+function vSetup() {
+  const p = S.plan;
+  const notif = "Notification" in window ? Notification.permission : "unsupported";
+  return `<div class="pad" style="padding-bottom:18px"><div class="meta">Setup</div></div>
+    <div class="sec pad"><span class="meta">Plan</span><div>
+      <div class="set"><label for="s-total">Trays<small>Change after refinements</small></label><input id="s-total" type="number" inputmode="numeric" min="1" max="99" value="${p.total}" data-act="plan" data-k="total"></div>
+      <div class="set"><label for="s-days">Days per tray</label><select id="s-days" data-act="plan" data-k="days">${[5, 7, 10, 14].map(d => `<option ${d === p.days ? "selected" : ""}>${d}</option>`).join("")}</select></div>
+      <div class="set"><label for="s-start">Tray 01 started</label><input id="s-start" type="date" value="${p.start}" data-act="plan" data-k="start"></div>
+      <div class="set"><label for="s-goal">Daily wear goal<small>Sets your ${hmClock(budget())} out-time</small></label><select id="s-goal" data-act="plan" data-k="goal">${[20, 21, 22].map(g => `<option value="${g}" ${g === p.goal ? "selected" : ""}>${g}h</option>`).join("")}</select></div>
+      <div class="set"><label for="s-swap">Swap time<small>When the new tray goes in</small></label><input id="s-swap" type="time" value="${p.swapTime}" data-act="plan" data-k="swapTime"></div>
+    </div></div>
+    <div class="sec pad"><span class="meta">Reminders</span><div>
+      <div class="set"><label for="s-outmin">Trays out too long<small>Alert while the app is open</small></label><select id="s-outmin" data-act="outmin">${[15, 20, 30, 45, 60].map(m => `<option value="${m}" ${m === S.rem.outMin ? "selected" : ""}>${m} min</option>`).join("")}</select></div>
+      <div class="set"><span>Notifications<small>${notif === "granted" ? "On" : notif === "denied" ? "Blocked in phone settings" : notif === "unsupported" ? "Add to Home Screen first" : "Off"}</small></span>${notif === "default" ? '<button class="link" type="button" data-act="notif">Turn on</button>' : ""}</div>
+      <div class="set"><span>Swap days, photo days and visits<small>Adds them to your phone calendar with alerts</small></span><button class="link" type="button" data-act="ics">Add</button></div>
+    </div></div>
+    <div class="sec pad"><span class="meta">Data</span>
+      <div class="sub">Stored on this phone only. Export a backup now and then, or you lose it with the phone.</div>
+      <button class="btn line" type="button" data-act="export"><span>Export backup</span><span>↓</span></button>
+      <label class="btn line" for="importIn"><span>Restore backup</span><span>↑</span></label><input id="importIn" type="file" accept="application/json,.json" data-act="import" hidden>
+      <button class="btn danger" type="button" data-act="wipe">${wipeArm ? "Tap again to erase everything" : "Erase all data"}</button>
+    </div><div style="height:20px"></div>`;
+}
+let wipeArm = false;
+const V = { today: vToday, trays: vTrays, photos: vPhotos, ortho: vOrtho, setup: vSetup };
+
+// ---------------- sheets ----------------
+let sheet = null;
+function openSheet(html, onOpen) {
+  sheet = true;
+  $("#overlay").innerHTML = `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true">${html}</div>`;
+  if (onOpen) onOpen($("#overlay .sheet"));
+}
+function closeSheet() { sheet = null; $("#overlay").innerHTML = ""; }
+
+function sheetOut(o) {
+  const isNew = !o;
+  const s = o ? o.s : now() - 30 * MIN, e = o ? (o.e == null ? null : o.e) : now();
+  openSheet(`<h2>${isNew ? "Add time out" : "Edit time out"}</h2>
+    <form id="outForm" style="display:grid;gap:14px" data-id="${o ? o.id : ""}">
+      <div class="field"><span class="meta">Out for</span><div class="chips">${["Meal", "Snack", "Drink", "Clean", "Other"].map(w => `<button type="button" class="chip" data-act="chipOne" data-v="${w}" aria-pressed="${(o ? o.why : "Meal") === w}">${w}</button>`).join("")}</div></div>
+      <div class="field"><label class="meta" for="f-date">Date</label><input id="f-date" type="date" value="${isoD(s)}" required></div>
+      <div class="two"><div class="field"><label class="meta" for="f-s">Out</label><input id="f-s" type="time" value="${hhmm(s)}" required></div>
+      <div class="field"><label class="meta" for="f-e">Back in</label><input id="f-e" type="time" value="${e == null ? "" : hhmm(e)}" ${e == null ? 'placeholder="still out"' : "required"}></div></div>
+      <div class="acts">${isNew ? '<button class="btn line sm" type="button" data-act="close">Cancel</button>' : '<button class="btn danger sm" type="button" data-act="delOut">Delete</button>'}<button class="btn sm" type="submit">Save</button></div>
+    </form>`);
+}
+function sheetSym(s) {
+  const cur = s || { type: "Soreness", sev: 2, date: isoD(now()), note: "" };
+  openSheet(`<h2>${s ? "Edit symptom" : "Log a symptom"}</h2>
+    <form id="symForm" style="display:grid;gap:14px" data-id="${s ? s.id : ""}">
+      <div class="field"><span class="meta">What</span><div class="chips" data-group="type">${["Soreness", "Rubbing", "Tight fit", "Loose attachment", "Tray cracked", "Other"].map(t => `<button type="button" class="chip" data-act="chipOne" data-v="${t}" aria-pressed="${cur.type === t}">${t}</button>`).join("")}</div></div>
+      <div class="field"><span class="meta">How bad, 1–5</span><div class="chips" data-group="sev">${[1, 2, 3, 4, 5].map(n => `<button type="button" class="chip" data-act="chipOne" data-v="${n}" aria-pressed="${cur.sev === n}" style="min-width:44px">${n}</button>`).join("")}</div></div>
+      <div class="field"><label class="meta" for="f-sdate">Date</label><input id="f-sdate" type="date" value="${cur.date}" required></div>
+      <div class="field"><label class="meta" for="f-snote">Where, or what happened</label><textarea id="f-snote" placeholder="e.g. upper right, attachment on the canine came off">${esc(cur.note)}</textarea></div>
+      <div class="acts">${s ? '<button class="btn danger sm" type="button" data-act="delSym">Delete</button>' : '<button class="btn line sm" type="button" data-act="close">Cancel</button>'}<button class="btn sm" type="submit">Save</button></div>
+    </form>`);
+}
+function sheetVisit(v) {
+  const cur = v || { date: isoD(now()), tags: [], note: "" };
+  openSheet(`<h2>${v ? "Edit visit" : "Add a visit"}</h2>
+    <form id="visitForm" style="display:grid;gap:14px" data-id="${v ? v.id : ""}">
+      <div class="field"><label class="meta" for="f-vdate">Date</label><input id="f-vdate" type="date" value="${cur.date}" required></div>
+      <div class="field"><span class="meta">What was done</span><div class="chips">${["Consult", "Scan", "Attachments", "IPR", "New trays", "Check-up", "Refinement", "Retainers"].map(t => `<button type="button" class="chip" data-act="chipMany" data-v="${t}" aria-pressed="${cur.tags.includes(t)}">${t}</button>`).join("")}</div></div>
+      <div class="field"><label class="meta" for="f-vnote">Notes</label><textarea id="f-vnote" placeholder="e.g. attachments on 8 teeth, got trays 1–4">${esc(cur.note)}</textarea></div>
+      <div class="acts">${v ? '<button class="btn danger sm" type="button" data-act="delVisit">Delete</button>' : '<button class="btn line sm" type="button" data-act="close">Cancel</button>'}<button class="btn sm" type="submit">Save</button></div>
+    </form>`);
+}
+function sheetAppt() {
+  const a = S.appt || { date: isoD(addDays(now(), 14)), time: "10:00", what: "" };
+  openSheet(`<h2>Next appointment</h2>
+    <form id="apptForm" style="display:grid;gap:14px">
+      <div class="two"><div class="field"><label class="meta" for="f-adate">Date</label><input id="f-adate" type="date" value="${a.date}" required></div>
+      <div class="field"><label class="meta" for="f-atime">Time</label><input id="f-atime" type="time" value="${a.time}" required></div></div>
+      <div class="field"><label class="meta" for="f-awhat">What for</label><input id="f-awhat" value="${esc(a.what)}" placeholder="e.g. attachment check, next trays" style="font-family:var(--sans)"></div>
+      <div class="acts">${S.appt ? '<button class="btn danger sm" type="button" data-act="delAppt">Remove</button>' : '<button class="btn line sm" type="button" data-act="close">Cancel</button>'}<button class="btn sm" type="submit">Save</button></div>
+    </form>`);
+}
+function sheetTray(k) {
+  const a = trayStart(k), b = addDays(a, S.plan.days - 1);
+  openSheet(`<h2>Tray ${pad(k)}</h2>
+    <div class="meta">${fd(a, { day: "numeric", month: "short" })} – ${fd(b, { day: "numeric", month: "short" })} · avg <b>${trayAvg(k)}h</b></div>
+    <div class="field"><label class="meta" for="f-tnote">Note</label><textarea id="f-tnote" placeholder="How did it fit? Anything to tell your orthodontist?">${esc(S.trayNotes[k] || "")}</textarea></div>
+    <div class="acts"><button class="btn line sm" type="button" data-act="close">Close</button><button class="btn sm" type="button" data-act="saveTray" data-n="${k}">Save</button></div>`);
+}
+function sheetPhoto(key) {
+  const [k, v] = key.split("-");
+  openSheet(`<div class="meta"><b>T${pad(+k)}</b> · ${v}</div><img class="full" src="${PH[key]}" alt="">
+    <div class="acts"><button class="btn danger sm" type="button" data-act="delPh" data-k="${key}">Delete</button>
+    <label class="btn line sm" for="rep-${key}">Replace</label><input id="rep-${key}" type="file" accept="image/*" data-act="photo" data-k="${key}" hidden></div>
+    <button class="btn line sm" type="button" data-act="close">Close</button>`);
+}
+
+// ---------------- actions ----------------
+function shrink(file) {
+  return new Promise((res, rej) => {
+    const img = new Image(), u = URL.createObjectURL(file);
+    img.onload = () => {
+      const m = 1200, r = Math.min(1, m / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * r); c.height = Math.round(img.naturalHeight * r);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c.toDataURL("image/jpeg", 0.82));
+    };
+    img.onerror = () => { URL.revokeObjectURL(u); rej(new Error("Could not read that image")); };
+    img.src = u;
+  });
+}
+function download(name, text, type) {
+  const blob = new Blob([text], { type }), a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+function ics() {
+  const st = t => { const d = new Date(t); return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`; };
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const ev = [];
+  const t = now(), n = Math.max(trayOn(t), 1);
+  for (let k = n + 1; k <= S.plan.total; k++) {
+    const at = atTime(trayStart(k), S.plan.swapTime);
+    if (at < t) continue;
+    ev.push(["aligned-swap-" + k, at, at + 15 * MIN, `Invisalign: tray ${k} in`, `Brush, take front/left/right photos, then tray ${k} in. Keep tray ${k - 1} as a backup.`, "-PT0M"]);
+  }
+  if (S.appt) {
+    const at = atTime(parseD(S.appt.date), S.appt.time);
+    if (at > t) ev.push(["aligned-appt-" + S.appt.date, at, at + HOUR, "Orthodontist" + (S.appt.what ? ": " + S.appt.what : ""), "Bring your questions from the Aligned app.", "-P1D"]);
+  }
+  if (!ev.length) { banner("Nothing to add", "No upcoming swaps or visits."); return; }
+  const clean = s => s.replace(/[,;\\]/g, m => "\\" + m);
+  const body = ev.map(([id, a, b, sum, desc, alarm]) => ["BEGIN:VEVENT", `UID:${id}@aligned`, `DTSTAMP:${stamp}`, `DTSTART:${st(a)}`, `DTEND:${st(b)}`, `SUMMARY:${clean(sum)}`, `DESCRIPTION:${clean(desc)}`, "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${clean(sum)}`, `TRIGGER:${alarm}`, "END:VALARM", "END:VEVENT"].join("\r\n")).join("\r\n");
+  download("aligned-reminders.ics", `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Aligned//EN\r\n${body}\r\nEND:VCALENDAR\r\n`, "text/calendar");
+}
+async function notifyOS(title, body) {
+  try {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const reg = await navigator.serviceWorker?.getRegistration();
+    if (reg) reg.showNotification(title, { body, icon: "icon-192.png", tag: "aligned-out" });
+    else new Notification(title, { body });
+  } catch (_) {}
+}
+
+document.addEventListener("click", async e => {
+  const el = e.target.closest("[data-act]"); if (!el) return;
+  const a = el.dataset.act;
+  if (el.tagName === "INPUT" && (el.type === "checkbox" || el.type === "file" || el.type === "range")) return;
+  if (a === "tab") { tab = el.dataset.k; wipeArm = false; render(); }
+  else if (a === "toggle") {
+    const o = openOut();
+    if (o) { o.e = now(); if (o.e - o.s < MIN) S.outs = S.outs.filter(x => x !== o); }
+    else S.outs.push({ id: uid(), s: now(), e: null, why: guessWhy() });
+    save(); render(true);
+  }
+  else if (a === "why") { const o = openOut(); if (o) { o.why = el.dataset.v; save(); render(true); } }
+  else if (a === "addOut") sheetOut(null);
+  else if (a === "editOut") sheetOut(S.outs.find(x => x.id === el.dataset.id));
+  else if (a === "delOut") { const id = $("#outForm").dataset.id; S.outs = S.outs.filter(x => x.id !== id); save(); closeSheet(); render(true); }
+  else if (a === "close") closeSheet();
+  else if (a === "chipOne") { el.parentElement.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c === el)); }
+  else if (a === "chipMany") { el.setAttribute("aria-pressed", el.getAttribute("aria-pressed") !== "true"); }
+  else if (a === "tray") sheetTray(+el.dataset.n);
+  else if (a === "saveTray") { const v = $("#f-tnote").value.trim(); if (v) S.trayNotes[el.dataset.n] = v; else delete S.trayNotes[el.dataset.n]; save(); closeSheet(); render(true); }
+  else if (a === "viewPh") sheetPhoto(el.dataset.k);
+  else if (a === "delPh") { const k = el.dataset.k; delete PH[k]; idb.del(k).catch(() => {}); closeSheet(); render(true); }
+  else if (a === "appt") sheetAppt();
+  else if (a === "delAppt") { S.appt = null; save(); closeSheet(); render(true); }
+  else if (a === "delQ") { S.questions = S.questions.filter(q => q.id !== el.dataset.id); save(); render(true); }
+  else if (a === "addSym") sheetSym(null);
+  else if (a === "editSym") sheetSym(S.symptoms.find(s => s.id === el.dataset.id));
+  else if (a === "delSym") { const id = $("#symForm").dataset.id; S.symptoms = S.symptoms.filter(s => s.id !== id); save(); closeSheet(); render(true); }
+  else if (a === "addVisit") sheetVisit(null);
+  else if (a === "editVisit") sheetVisit(S.visits.find(v => v.id === el.dataset.id));
+  else if (a === "delVisit") { const id = $("#visitForm").dataset.id; S.visits = S.visits.filter(v => v.id !== id); save(); closeSheet(); render(true); }
+  else if (a === "notif") { try { await Notification.requestPermission(); } catch (_) {} render(true); }
+  else if (a === "ics") ics();
+  else if (a === "export") {
+    const photos = await idb.all().catch(() => ({}));
+    download(`aligned-backup-${isoD(now())}.json`, JSON.stringify({ app: "aligned", v: 1, state: S, photos }), "application/json");
+  }
+  else if (a === "wipe") {
+    if (!wipeArm) { wipeArm = true; render(true); setTimeout(() => { if (wipeArm) { wipeArm = false; if (tab === "setup") render(true); } }, 4000); return; }
+    wipeArm = false; S = DEF(); save(); Object.keys(PH).forEach(k => delete PH[k]); await idb.clear().catch(() => {}); tab = "today"; render();
+  }
+});
+function guessWhy() { const h = new Date().getHours(); return (h >= 6 && h < 10) || (h >= 11 && h < 15) || (h >= 18 && h < 22) ? "Meal" : "Snack"; }
+
+document.addEventListener("change", async e => {
+  const el = e.target, a = el.dataset.act; if (!a) return;
+  if (a === "cl") { const n = Math.min(Math.max(trayOn(now()), 1), S.plan.total); (S.checklist[n] = S.checklist[n] || [])[+el.dataset.i] = el.checked; save(); render(true); }
+  else if (a === "q") { const q = S.questions.find(x => x.id === el.dataset.id); if (q) { q.d = el.checked; save(); render(true); } }
+  else if (a === "plan") {
+    const k = el.dataset.k;
+    if (k === "start" || k === "swapTime") { if (el.value) S.plan[k] = el.value; }
+    else { const v = parseInt(el.value, 10); if (v > 0) S.plan[k] = Math.min(99, v); }
+    save(); render(true);
+  }
+  else if (a === "outmin") { S.rem.outMin = +el.value; save(); }
+  else if (a === "photo" && el.files && el.files[0]) {
+    try { const url = await shrink(el.files[0]); PH[el.dataset.k] = url; await idb.set(el.dataset.k, url); closeSheet(); render(true); }
+    catch (err) { banner("Photo not saved", err.message || "Try another photo."); }
+  }
+  else if (a === "import" && el.files && el.files[0]) {
+    try {
+      const data = JSON.parse(await el.files[0].text());
+      if (data.app !== "aligned" || !data.state) throw new Error("That file isn't an Aligned backup.");
+      S = Object.assign(DEF(), data.state); save();
+      await idb.clear().catch(() => {}); Object.keys(PH).forEach(k => delete PH[k]);
+      for (const [k, v] of Object.entries(data.photos || {})) { PH[k] = v; await idb.set(k, v).catch(() => {}); }
+      banner("Backup restored", "Your plan, logs and photos are back."); tab = "today"; render();
+    } catch (err) { banner("Restore failed", err.message || "Could not read that file."); }
+  }
+});
+document.addEventListener("input", e => { if (e.target.dataset.act === "split") $("#cmp").style.setProperty("--split", e.target.value + "%"); });
+
+document.addEventListener("submit", e => {
+  e.preventDefault();
+  const f = e.target;
+  if (f.id === "onbForm") {
+    const total = parseInt($("#o-total").value, 10);
+    if (!(total > 0)) return;
+    S.plan = { total: Math.min(99, total), days: +$("#o-days").value, start: $("#o-start").value || isoD(now()), goal: +$("#o-goal").value, swapTime: "21:30" };
+    S.since = isoD(now());
+    save(); tab = "today"; render();
+  }
+  else if (f.id === "outForm") {
+    const day = parseD($("#f-date").value || isoD(now()));
+    const s = atTime(day, $("#f-s").value);
+    let en = $("#f-e").value ? atTime(day, $("#f-e").value) : null;
+    if (en != null && en <= s) en = addDays(en, 1);
+    const w = f.querySelector('.chip[aria-pressed="true"]')?.dataset.v || "Meal";
+    if (f.dataset.id) { const o = S.outs.find(x => x.id === f.dataset.id); if (o) { o.s = s; o.why = w; o.e = en == null && o.e == null ? null : (en ?? now()); } }
+    else S.outs.push({ id: uid(), s, e: en ?? now(), why: w });
+    if (S.outs.filter(x => x.e == null).length > 1) S.outs.forEach((x, i, arr) => { if (x.e == null && x !== arr.filter(y => y.e == null).pop()) x.e = now(); });
+    save(); closeSheet(); render(true);
+  }
+  else if (f.id === "symForm") {
+    const type = f.querySelector('[data-group="type"] .chip[aria-pressed="true"]')?.dataset.v || "Other";
+    const sev = +(f.querySelector('[data-group="sev"] .chip[aria-pressed="true"]')?.dataset.v || 2);
+    const item = { id: f.dataset.id || uid(), type, sev, date: $("#f-sdate").value || isoD(now()), note: $("#f-snote").value.trim() };
+    const i = S.symptoms.findIndex(s => s.id === item.id); if (i >= 0) S.symptoms[i] = item; else S.symptoms.push(item);
+    save(); closeSheet(); render(true);
+  }
+  else if (f.id === "visitForm") {
+    const item = { id: f.dataset.id || uid(), date: $("#f-vdate").value || isoD(now()), tags: [...f.querySelectorAll('.chip[aria-pressed="true"]')].map(c => c.dataset.v), note: $("#f-vnote").value.trim() };
+    const i = S.visits.findIndex(v => v.id === item.id); if (i >= 0) S.visits[i] = item; else S.visits.push(item);
+    save(); closeSheet(); render(true);
+  }
+  else if (f.id === "apptForm") {
+    S.appt = { date: $("#f-adate").value, time: $("#f-atime").value || "09:00", what: $("#f-awhat").value.trim() };
+    save(); closeSheet(); render(true);
+  }
+  else if (f.id === "qForm") {
+    const v = $("#qIn").value.trim(); if (!v) return;
+    S.questions.unshift({ id: uid(), t: v, d: false }); save(); render(true); $("#qIn").focus();
+  }
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && sheet) closeSheet(); });
+
+// ---------------- tick + reminder ----------------
+let alerted = null;
+function tick() {
+  if (!S.plan) return;
+  const o = openOut();
+  if (o) {
+    const since = now() - o.s;
+    if (since >= S.rem.outMin * MIN && alerted !== o.id) {
+      alerted = o.id;
+      const msg = `Trays out ${S.rem.outMin} min. Brush, rinse, trays back in.`;
+      banner("Trays out too long", msg); notifyOS("Aligned", msg);
+      try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (_) {}
+    }
+  }
+  const active = document.activeElement;
+  const typing = active && /INPUT|SELECT|TEXTAREA/.test(active.tagName);
+  if (!sheet && !typing && (tab === "today" || tab === "trays") && (o || Date.now() % 30000 < 1000)) render(true);
+}
+setInterval(tick, 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && !sheet) render(true); });
+
+// ---------------- boot ----------------
+render();
+idb.all().then(all => { Object.assign(PH, all); if (tab === "photos") render(true); }).catch(() => {});
+if ("serviceWorker" in navigator) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+})();
+</script>
+</body>
+</html>
