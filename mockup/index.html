@@ -1,0 +1,812 @@
+<title>Aligned Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Layout: prototype notes on the left, a phone frame on the right; the phone stacks under the notes on narrow screens. */
+:root {
+  --page-bg: #EEF2F2; --page-ink: #1A2524; --page-muted: #5F6E6C; --page-line: #D5DEDD;
+  --page-card: #FFFFFF; --frame: #1B1F1F; --page-accent: #0E8C7F;
+  --font-ui: "Figtree", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page-bg: #0E1212; --page-ink: #E3EBEA; --page-muted: #93A3A1; --page-line: #253030;
+  --page-card: #151B1B; --frame: #2A3332; --page-accent: #3CC2B2; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --page-bg: #0E1212; --page-ink: #E3EBEA; --page-muted: #93A3A1; --page-line: #253030;
+  --page-card: #151B1B; --frame: #2A3332; --page-accent: #3CC2B2; color-scheme: dark }
+
+/* ---------- Skins (inside the phone) ---------- */
+.app[data-skin="clinical"] {
+  --bg:#F2F6F6; --surface:#FFFFFF; --surface-2:#E9F0EF; --ink:#12302F; --muted:#5B7270; --line:#DCE6E5;
+  --accent:#0E8C7F; --accent-ink:#FFFFFF; --accent-soft:#DDF2EF; --accent-2:#5AB8D6;
+  --good:#1E8A4C; --warn:#B9730F; --bad:#C2412D;
+  --radius:16px; --radius-sm:10px; --shadow:0 1px 2px rgba(18,48,47,.06);
+  --font-d:"Figtree", system-ui, sans-serif; --font-b:"Figtree", system-ui, sans-serif; --font-n:"IBM Plex Mono", ui-monospace, monospace;
+  --h1-weight:700; --tracking:-0.01em;
+}
+.app[data-skin="playful"] {
+  --bg:#FFF1F6; --surface:#FFFFFF; --surface-2:#FFE3EE; --ink:#3A1430; --muted:#8A5A78; --line:#F7D3E2;
+  --accent:#E8336F; --accent-ink:#FFFFFF; --accent-soft:#FFDCE9; --accent-2:#F5B300;
+  --good:#1F9D62; --warn:#C77700; --bad:#D4283A;
+  --radius:24px; --radius-sm:16px; --shadow:0 3px 0 rgba(58,20,48,.08);
+  --font-d:"Fredoka", "Nunito", system-ui, sans-serif; --font-b:"Nunito", system-ui, sans-serif; --font-n:"Fredoka", "Nunito", system-ui, sans-serif;
+  --h1-weight:700; --tracking:0;
+}
+.app[data-skin="minimal"] {
+  --bg:#0A0A0B; --surface:#121214; --surface-2:#1A1A1D; --ink:#EDEDED; --muted:#8A8A91; --line:#26262A;
+  --accent:#EDEDED; --accent-ink:#0A0A0B; --accent-soft:#1F1F23; --accent-2:#8A8A91;
+  --good:#7CCB8E; --warn:#E0B35A; --bad:#F07067;
+  --radius:6px; --radius-sm:4px; --shadow:none;
+  --font-d:"JetBrains Mono", ui-monospace, monospace; --font-b:"Inter Tight", system-ui, sans-serif; --font-n:"JetBrains Mono", ui-monospace, monospace;
+  --h1-weight:500; --tracking:-0.02em; color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .app[data-skin="clinical"] {
+    --bg:#0C1615; --surface:#13201F; --surface-2:#1A2928; --ink:#E4EFEE; --muted:#8DA3A1; --line:#24332F;
+    --accent:#3CC2B2; --accent-ink:#06201D; --accent-soft:#143532; --accent-2:#6FC6E2;
+    --good:#4CC27F; --warn:#E3A548; --bad:#F07462; --shadow:none; color-scheme: dark }
+  :root:not([data-theme="light"]) .app[data-skin="playful"] {
+    --bg:#1D1019; --surface:#2A1724; --surface-2:#35202F; --ink:#FBE9F2; --muted:#C79AB5; --line:#43283A;
+    --accent:#FF6A9E; --accent-ink:#2A0718; --accent-soft:#4A2034; --accent-2:#FFD150;
+    --good:#4FD08F; --warn:#FFB347; --bad:#FF6B78; --shadow:none; color-scheme: dark }
+}
+:root[data-theme="dark"] .app[data-skin="clinical"] {
+  --bg:#0C1615; --surface:#13201F; --surface-2:#1A2928; --ink:#E4EFEE; --muted:#8DA3A1; --line:#24332F;
+  --accent:#3CC2B2; --accent-ink:#06201D; --accent-soft:#143532; --accent-2:#6FC6E2;
+  --good:#4CC27F; --warn:#E3A548; --bad:#F07462; --shadow:none; color-scheme: dark }
+:root[data-theme="dark"] .app[data-skin="playful"] {
+  --bg:#1D1019; --surface:#2A1724; --surface-2:#35202F; --ink:#FBE9F2; --muted:#C79AB5; --line:#43283A;
+  --accent:#FF6A9E; --accent-ink:#2A0718; --accent-soft:#4A2034; --accent-2:#FFD150;
+  --good:#4FD08F; --warn:#FFB347; --bad:#FF6B78; --shadow:none; color-scheme: dark }
+
+/* ---------- Page ---------- */
+* { box-sizing: border-box; }
+html, body { background: var(--page-bg); color: var(--page-ink); }
+body { font-family: var(--font-ui); font-size: 15px; line-height: 1.5; }
+.page {
+  max-width: 1080px; margin: 0 auto;
+  padding-block: 32px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 48px; align-items: start;
+}
+.notes { display: grid; gap: 24px; min-width: 0; max-width: 520px; }
+.notes h1 { font-size: 40px; line-height: 1.05; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+.notes h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--page-muted); margin: 0 0 10px; font-weight: 600; }
+.notes p { margin: 0; color: var(--page-muted); }
+.lede { font-size: 17px; }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; border: 1px solid var(--page-line); border-radius: 12px; background: var(--page-card); }
+.seg button { font: inherit; font-weight: 600; border: 0; background: transparent; color: var(--page-ink); padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-ink); color: var(--page-bg); }
+.seg button:focus-visible, .ctl:focus-visible { outline: 2px solid var(--page-accent); outline-offset: 2px; }
+.skin-desc { margin-top: 10px !important; font-size: 14px; }
+.ctl { font: inherit; font-weight: 600; border: 1px solid var(--page-line); background: var(--page-card); color: var(--page-ink); padding: 8px 14px; border-radius: 10px; cursor: pointer; }
+.ctl-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.map { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.map li { display: grid; grid-template-columns: 84px minmax(0,1fr); gap: 12px; font-size: 14px; color: var(--page-muted); }
+.map b { color: var(--page-ink); font-weight: 600; }
+.fine { font-size: 13px; }
+
+.phone-wrap { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); }
+.phone {
+  width: 390px; max-width: 100%; height: 800px; max-height: calc(100vh - 48px); min-height: 640px;
+  border: 10px solid var(--frame); border-radius: 48px; overflow: hidden; position: relative;
+  box-shadow: 0 30px 60px -30px rgba(0,0,0,.35);
+}
+@media (max-width: 860px) {
+  .page { grid-template-columns: minmax(0,1fr); gap: 28px; padding-block: 20px 32px; }
+  .phone-wrap { position: static; display: flex; justify-content: center; }
+  .notes h1 { font-size: 32px; }
+}
+@media (max-width: 440px) {
+  .phone { border-width: 6px; border-radius: 32px; height: 760px; max-height: none; }
+}
+
+/* ---------- App ---------- */
+.app { height: 100%; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-family: var(--font-b); position: relative; transition: background .25s; }
+.status { display: flex; justify-content: space-between; align-items: center; padding: 14px 26px 6px; font-family: var(--font-n); font-size: 13px; font-weight: 600; color: var(--ink); flex: none; }
+.status .bat { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); }
+.screen { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 8px 18px 24px; display: flex; flex-direction: column; gap: 14px; scrollbar-width: thin; }
+.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; padding-top: 4px; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0; font-weight: 600; }
+.app h1 { font-family: var(--font-d); font-size: 30px; margin: 0; font-weight: var(--h1-weight); letter-spacing: var(--tracking); line-height: 1.1; }
+.app h3 { font-family: var(--font-d); font-size: 15px; margin: 0; font-weight: 600; letter-spacing: var(--tracking); }
+.tag { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); display: grid; gap: 12px; min-width: 0; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.num { font-family: var(--font-n); font-variant-numeric: tabular-nums; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.btn { font: inherit; font-weight: 700; border: 0; border-radius: var(--radius-sm); padding: 12px 16px; cursor: pointer; background: var(--accent); color: var(--accent-ink); }
+.btn.ghost { background: var(--surface-2); color: var(--ink); }
+.btn.link { background: transparent; color: var(--accent); padding: 4px 0; font-weight: 700; }
+.app[data-skin="minimal"] .btn.link { text-decoration: underline; text-underline-offset: 3px; }
+.btn.block { width: 100%; }
+.btn.danger { background: transparent; color: var(--bad); }
+.btn:focus-visible, .tab:focus-visible, .chip:focus-visible, .tile:focus-visible, .entry:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Today hero */
+.hero { justify-items: center; text-align: center; padding: 20px 16px 18px; }
+.ring { width: 200px; height: 200px; position: relative; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-c { position: absolute; inset: 0; display: grid; place-content: center; gap: 2px; }
+.ring-big { font-family: var(--font-n); font-size: 40px; font-weight: 600; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.ring-sub { font-size: 12px; color: var(--muted); max-width: 120px; margin: 0 auto; line-height: 1.3; }
+.state { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--good); }
+.state.out .dot { background: var(--warn); animation: pulse 1.4s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+.big-btn { width: 100%; font-size: 17px; padding: 16px; }
+.app[data-skin="playful"] .big-btn { box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 60%, var(--ink)); transform: translateY(-2px); }
+.app[data-skin="playful"] .big-btn:active { transform: translateY(1px); box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 60%, var(--ink)); }
+.app[data-skin="minimal"] .big-btn { text-transform: uppercase; letter-spacing: .08em; font-family: var(--font-n); font-size: 14px; }
+.proj { font-size: 13px; color: var(--muted); }
+.proj b { color: var(--ink); }
+
+.stat-big { font-family: var(--font-n); font-size: 34px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.daydots { display: flex; gap: 4px; }
+.daydots i { flex: 1; height: 6px; border-radius: 3px; background: var(--surface-2); }
+.daydots i.on { background: var(--accent); }
+.daydots i.now { background: color-mix(in srgb, var(--accent) 45%, var(--surface-2)); }
+.flame { color: var(--accent-2); }
+
+.entries { display: grid; gap: 0; }
+.entry { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); background: none; border-left: 0; border-right: 0; border-bottom: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.entry:first-child { border-top: 0; }
+.entry .dur { font-family: var(--font-n); font-weight: 600; font-variant-numeric: tabular-nums; }
+.entry .dur.over { color: var(--warn); }
+
+.badges { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px; }
+.badge { flex: none; width: 84px; display: grid; justify-items: center; gap: 6px; text-align: center; font-size: 11px; font-weight: 700; color: var(--muted); }
+.badge .medal { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-family: var(--font-d); font-size: 18px; font-weight: 700; }
+.badge.locked .medal { background: var(--surface-2); color: var(--muted); opacity: .6; }
+
+/* Trays */
+.progress { height: 10px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.progress i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; }
+.tile { font: inherit; color: inherit; border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius-sm); padding: 8px 6px; display: grid; gap: 2px; text-align: center; cursor: pointer; }
+.tile b { font-family: var(--font-n); font-size: 18px; font-variant-numeric: tabular-nums; }
+.tile span { font-size: 10px; color: var(--muted); }
+.tile.done { background: var(--surface-2); border-color: transparent; }
+.tile.done b { color: var(--muted); }
+.tile.cur { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.tile.cur span { color: var(--accent-ink); opacity: .85; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); margin-top: 2px; flex: none; }
+.check.done span { text-decoration: line-through; color: var(--muted); }
+
+/* Photos */
+.shots { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.shot { aspect-ratio: 3/4; max-width: 100%; border-radius: var(--radius-sm); overflow: hidden; position: relative; background: var(--surface-2); border: 1px dashed var(--line); display: grid; place-items: center; cursor: pointer; }
+.shot.has { border-style: solid; }
+.shot img, .shot svg { width: 100%; height: 100%; object-fit: cover; display: block; }
+.shot .lbl { position: absolute; left: 6px; bottom: 6px; font-size: 10px; font-weight: 700; background: color-mix(in srgb, var(--bg) 80%, transparent); color: var(--ink); padding: 2px 6px; border-radius: 99px; }
+.shot .add { display: grid; justify-items: center; gap: 4px; font-size: 11px; color: var(--muted); font-weight: 700; }
+.shot input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.compare { position: relative; aspect-ratio: 4/3; max-width: 100%; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); }
+.compare .layer { position: absolute; inset: 0; }
+.compare .layer svg, .compare .layer img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.compare .after { clip-path: inset(0 0 0 var(--split, 50%)); }
+.compare .bar { position: absolute; top: 0; bottom: 0; left: var(--split, 50%); width: 2px; background: var(--surface); transform: translateX(-1px); pointer-events: none; }
+.compare .cap { position: absolute; top: 8px; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: color-mix(in srgb, var(--bg) 80%, transparent); color: var(--ink); }
+.compare input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; margin: 0; }
+
+/* Dentist */
+.appt { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.appt .muted { color: var(--accent-ink); opacity: .8; }
+.appt-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.appt .stat-big { font-size: 44px; }
+.q { display: flex; gap: 10px; align-items: flex-start; }
+.addrow { display: flex; gap: 8px; }
+.addrow input { flex: 1; min-width: 0; }
+.field, .addrow input, select, textarea, input[type="date"], input[type="time"], input[type="number"] {
+  font: inherit; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 9px 11px; width: 100%; min-width: 0;
+}
+textarea { resize: vertical; min-height: 64px; }
+.sym { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.sym:first-child { border-top: 0; padding-top: 0; }
+.sev { display: inline-flex; gap: 3px; align-items: center; }
+.sev i { width: 8px; height: 8px; border-radius: 50%; background: var(--surface-2); }
+.sev i.on { background: var(--warn); }
+.sev.hi i.on { background: var(--bad); }
+.visit { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--line); }
+.visit:first-child { border-top: 0; padding-top: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: inherit; font-size: 13px; font-weight: 700; border: 1px solid var(--line); background: var(--surface); color: var(--ink); padding: 6px 12px; border-radius: 99px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.chip.static { cursor: default; font-size: 11px; padding: 3px 9px; background: var(--accent-soft); border-color: transparent; color: var(--ink); }
+
+/* Settings */
+.set { display: grid; grid-template-columns: minmax(0,1fr) 128px; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.set:first-child { border-top: 0; padding-top: 0; }
+.set label, .set .t { font-size: 14px; font-weight: 600; }
+.set .d { font-size: 12px; color: var(--muted); font-weight: 400; display: block; }
+.toggle { appearance: none; width: 46px; height: 28px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); position: relative; cursor: pointer; justify-self: end; transition: background .2s; padding: 0; }
+.toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: var(--muted); transition: transform .2s, background .2s; }
+.toggle:checked { background: var(--accent); border-color: var(--accent); }
+.toggle:checked::after { transform: translateX(18px); background: var(--accent-ink); }
+.toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rem { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--line); align-items: center; }
+.rem:first-child { border-top: 0; padding-top: 0; }
+
+/* Tab bar */
+.tabbar { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line); background: var(--surface); padding: 6px 6px 18px; }
+.tab { font: inherit; border: 0; background: none; color: var(--muted); display: grid; justify-items: center; gap: 3px; font-size: 10.5px; font-weight: 700; padding: 6px 0; cursor: pointer; border-radius: 10px; }
+.tab svg { width: 22px; height: 22px; }
+.tab[aria-current="page"] { color: var(--accent); }
+.app[data-skin="minimal"] .tab { text-transform: uppercase; letter-spacing: .06em; font-size: 9.5px; font-family: var(--font-n); }
+
+/* Sheet + notification */
+.scrim { position: absolute; inset: 0; background: rgba(0,0,0,.35); z-index: 20; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 21; background: var(--surface); border-radius: var(--radius) var(--radius) 0 0; padding: 10px 18px 26px; display: grid; gap: 14px; max-height: 85%; overflow-y: auto; animation: up .22s ease-out; border-top: 1px solid var(--line); }
+.sheet .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); justify-self: center; }
+.sheet h2 { font-family: var(--font-d); font-size: 20px; margin: 0; font-weight: 700; }
+.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.flabel { display: grid; gap: 4px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.sheet-actions { display: flex; gap: 10px; }
+.sheet-actions .btn { flex: 1; }
+@keyframes up { from { transform: translateY(30px); opacity: 0; } }
+.notif { position: absolute; top: 40px; left: 10px; right: 10px; z-index: 30; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 18px; padding: 12px 14px; display: grid; grid-template-columns: 36px minmax(0,1fr); gap: 10px; box-shadow: 0 12px 30px -10px rgba(0,0,0,.35); animation: drop .3s ease-out; }
+.notif .ico { width: 36px; height: 36px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; }
+.notif b { font-size: 13px; display: block; }
+.notif span { font-size: 13px; color: var(--muted); }
+@keyframes drop { from { transform: translateY(-20px); opacity: 0; } }
+canvas.confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="page">
+  <section class="notes">
+    <div style="display:grid;gap:12px">
+      <p class="eyebrow" style="color:var(--page-muted)">Clickable prototype · v0.1</p>
+      <h1>Aligned: your Invisalign, day by day</h1>
+      <p class="lede">A phone-first tracker for wear time, tray swaps, progress photos and orthodontist follow-up. Everything stays on your phone. Tap through the phone on the right; it runs on example data.</p>
+    </div>
+
+    <div>
+      <h2>Look and feel</h2>
+      <div class="seg" role="group" aria-label="Visual direction">
+        <button type="button" id="skin-clinical" data-skin="clinical" aria-pressed="true">Clean &amp; clinical</button>
+        <button type="button" id="skin-playful" data-skin="playful" aria-pressed="false">Playful</button>
+        <button type="button" id="skin-minimal" data-skin="minimal" aria-pressed="false">Minimal dark</button>
+      </div>
+      <p class="skin-desc" id="skin-desc"></p>
+    </div>
+
+    <div>
+      <h2>Try it</h2>
+      <div class="ctl-row">
+        <button type="button" class="ctl" id="jump">Clock +10 min</button>
+        <button type="button" class="ctl" id="reset">Reset example data</button>
+      </div>
+      <p class="fine" style="margin-top:10px">Tap <b>Trays out</b>, then jump the clock past 30 minutes to see the nudge. Tap a log entry to edit it. Add photos from your camera roll on the Photos tab.</p>
+    </div>
+
+    <div>
+      <h2>What each tab answers</h2>
+      <ul class="map">
+        <li><b>Today</b><span>Am I on track for 22h? Live trays-out timer, a 2-hour daily out budget, streak, last 7 days.</span></li>
+        <li><b>Trays</b><span>Which tray am I on and when do I switch? Plan grid, swap date, swap-day checklist.</span></li>
+        <li><b>Photos</b><span>Is it working? Front, left and right shots per tray, plus a before/after slider.</span></li>
+        <li><b>Dentist</b><span>What do I bring to my next visit? Countdown, questions, symptoms log, visit notes.</span></li>
+        <li><b>Settings</b><span>Plan size, days per tray, wear goal and the four reminders you picked.</span></li>
+      </ul>
+    </div>
+
+    <div>
+      <h2>Open questions for v1</h2>
+      <ul class="map">
+        <li><b>Day reset</b><span>Does a "day" end at midnight or when you go to bed? Late dinners can count against the wrong day.</span></li>
+        <li><b>Swaps</b><span>Your orthodontist may tell you to stay on a tray longer. Should a swap shift every later date, or only that tray's?</span></li>
+        <li><b>Backup</b><span>On-device only means a lost phone loses the history. A JSON export to Files covers that without needing an account.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="app" id="app" data-skin="clinical">
+        <div class="status"><span class="num" id="clock">15:20</span><span class="bat"><svg width="18" height="12" viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 9h2M5 7v4M9 4v7M13 1v10" stroke-linecap="round"/></svg><svg width="24" height="12" viewBox="0 0 24 12" fill="none"><rect x=".7" y=".7" width="20" height="10.6" rx="3" stroke="currentColor" stroke-width="1.2"/><rect x="2.5" y="2.5" width="14" height="7" rx="1.5" fill="currentColor"/><rect x="22" y="4" width="1.5" height="4" rx=".7" fill="currentColor"/></svg></span></div>
+        <main class="screen" id="screen"></main>
+        <nav class="tabbar" id="tabbar"></nav>
+        <div id="overlay"></div>
+        <canvas class="confetti" id="confetti" hidden></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ---------- helpers ----------
+  const $ = (s, r = document) => r.querySelector(s);
+  const TODAY = new Date(2026, 10, 19);
+  const DAY = 86400000;
+  const pad = n => String(n).padStart(2, "0");
+  const clock = m => { m = ((Math.floor(m) % 1440) + 1440) % 1440; return pad(Math.floor(m / 60)) + ":" + pad(m % 60); };
+  const hm = m => { m = Math.max(0, Math.round(m)); const h = Math.floor(m / 60), r = m % 60; return h ? `${h}h ${pad(r)}m` : `${r}m`; };
+  const mmss = sec => { sec = Math.max(0, Math.floor(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60; return (h ? h + ":" + pad(m) : m) + ":" + pad(s); };
+  const parseDate = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const isoDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const addDays = (d, n) => new Date(d.getTime() + n * DAY);
+  const fmt = (d, o = { weekday: "short", month: "short", day: "numeric" }) => d.toLocaleDateString("en-US", o);
+  const daysBetween = (a, b) => Math.round((b - a) / DAY);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const toMin = t => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+
+  // ---------- example state ----------
+  function freshState() {
+    return {
+      tab: "today",
+      plan: { total: 24, days: 7, start: "2026-11-10", goal: 22 },
+      out: [
+        { s: 7 * 60 + 40, e: 8 * 60 + 5, label: "Breakfast" },
+        { s: 12 * 60 + 30, e: 13 * 60 + 10, label: "Lunch" },
+      ],
+      outSince: null,
+      history: [21.0, 22.3, 22.5, 22.6, 23.1, 22.4, 22.9, 23.3, 22.2], // Nov 10..18
+      checklist: [
+        { t: "Brush and floss before the new tray goes in", d: false },
+        { t: "Take front, left and right photos", d: false },
+        { t: "Keep the old tray in its case as a backup", d: false },
+        { t: "Use chewies 5 minutes, 3 times today", d: false },
+      ],
+      trayNotes: { 1: "Tight for the first 2 days. Lisp gone by day 3.", 2: "Rubbing on lower left, behind the canine." },
+      photos: { 1: { front: "s:3", left: "s:3", right: "s:3" }, 2: { front: "s:2.6", left: null, right: null } },
+      appt: { date: "2026-12-03", time: "10:30", what: "Attachment check · pick up trays 3–6" },
+      questions: [
+        { t: "Is it normal that tray 2 doesn't fully seat on the back molars?", d: false },
+        { t: "Can I drink sparkling water with trays in?", d: false },
+        { t: "How long should I keep my old trays?", d: true },
+      ],
+      symptoms: [
+        { date: "2026-11-18", type: "Rubbing", sev: 3, note: "Lower left, behind the canine" },
+        { date: "2026-11-17", type: "Soreness", sev: 2, note: "New tray day" },
+        { date: "2026-11-11", type: "Soreness", sev: 4, note: "Hard to chew dinner" },
+      ],
+      visits: [
+        { date: "2026-11-10", tags: ["Attachments", "Scan"], note: "Attachments bonded on 8 teeth. Got trays 1–2. Wear 22h, swap weekly." },
+        { date: "2026-10-22", tags: ["Consult", "Scan"], note: "iTero scan, ClinCheck preview: 24 trays, about 6 months." },
+      ],
+      rem: { outLong: true, outMin: 30, swap: true, swapAt: "08:00", photo: true, appt: true },
+      sheet: null,
+      nudged: false,
+      symDraft: { type: "Soreness", sev: 2 },
+    };
+  }
+  let S = freshState();
+
+  // simulated clock: starts at 15:20 on Thu Nov 19, runs in real time
+  let simBase = 15 * 60 + 20, simT0 = Date.now(), jump = 0;
+  const nowMin = () => simBase + jump + (Date.now() - simT0) / 60000;
+
+  // ---------- derived ----------
+  function trayInfo() {
+    const start = parseDate(S.plan.start), d = Math.max(0, daysBetween(start, TODAY));
+    const n = Math.min(S.plan.total, Math.floor(d / S.plan.days) + 1);
+    const tStart = addDays(start, (n - 1) * S.plan.days);
+    const day = daysBetween(tStart, TODAY) + 1;
+    const swap = addDays(tStart, S.plan.days);
+    const end = addDays(start, S.plan.total * S.plan.days);
+    return { n, day, swap, tStart, end, start, daysToSwap: daysBetween(TODAY, swap) };
+  }
+  function outToday() {
+    let m = S.out.reduce((a, o) => a + Math.max(0, o.e - o.s), 0);
+    if (S.outSince != null) m += nowMin() - S.outSince;
+    return m;
+  }
+  const budget = () => (24 - S.plan.goal) * 60;
+  function streak() {
+    let n = 0;
+    for (let i = S.history.length - 1; i >= 0; i--) { if (S.history[i] >= S.plan.goal) n++; else break; }
+    return n;
+  }
+
+  // ---------- icons ----------
+  const I = {
+    today: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>',
+    trays: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 9c0-3 3.6-5 8-5s8 2 8 5v1c0 1-1 1.5-2 1.5H6c-1 0-2-.5-2-1.5z"/><path d="M5 15c1.5 2.5 4 4 7 4s5.5-1.5 7-4"/></svg>',
+    photos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+    dentist: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7 3C4.5 3 3 5 3 7.5c0 3 1.5 4.5 2 7 .4 2.5.8 6.5 2.3 6.5 1.6 0 1.4-5 2.7-5h4c1.3 0 1.1 5 2.7 5 1.5 0 1.9-4 2.3-6.5.5-2.5 2-4 2-7C21 5 19.5 3 17 3c-2 0-3 1-5 1S9 3 7 3z"/></svg>',
+    settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>',
+    flame: '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s5 4.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 1-3.5s.5 2 2 2.5C10 8 12 2 12 2z"/></svg>',
+    plus: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  };
+  const TABS = [["today", "Today"], ["trays", "Trays"], ["photos", "Photos"], ["dentist", "Dentist"], ["settings", "Settings"]];
+
+  // stylised "photo" of teeth; crook = how misaligned (0 straight .. 3 crooked)
+  function teeth(crook, view = "front") {
+    const skew = view === "left" ? -14 : view === "right" ? 14 : 0;
+    const widths = [20, 24, 26, 34, 34, 26, 24, 20];
+    const rot = [-6, 4, -9, 5, -4, 8, -3, 6], dy = [2, -3, 4, -1, 2, -4, 3, -2];
+    let x = 160 - widths.reduce((a, b) => a + b, 0) / 2, up = "", low = "";
+    widths.forEach((w, i) => {
+      const h = 46 - Math.abs(i - 3.5) * 3.5;
+      up += `<rect x="${x + 1}" y="${112 - h + dy[i] * crook / 3}" width="${w - 2}" height="${h}" rx="6" fill="#F6F1E6" stroke="#D9CFBF" transform="rotate(${rot[i] * crook / 3} ${x + w / 2} 112)"/>`;
+      low += `<rect x="${x + 3}" y="${118 - dy[7 - i] * crook / 4}" width="${w - 6}" height="${h - 10}" rx="6" fill="#EFE8DA" stroke="#D2C7B5" transform="rotate(${-rot[7 - i] * crook / 4} ${x + w / 2} 118)"/>`;
+      x += w;
+    });
+    return `<svg viewBox="0 0 320 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect width="320" height="240" fill="#C98F7E"/>
+      <g transform="translate(${skew * 2} 0) skewX(${skew})">
+        <path d="M40 112 Q160 18 280 112 Q160 214 40 112Z" fill="#7A2F33"/>
+        <path d="M58 112 Q160 50 262 112 Q160 176 58 112Z" fill="#4A1A1F"/>
+        <path d="M66 106 Q160 62 254 106 L254 112 L66 112Z" fill="#D7777A"/>
+        <path d="M66 120 Q160 160 254 120 L254 118 L66 118Z" fill="#D7777A"/>
+        ${up}${low}
+        <path d="M40 112 Q160 18 280 112 Q160 40 40 112Z" fill="#B86E66"/>
+        <path d="M40 112 Q160 214 280 112 Q160 190 40 112Z" fill="#B86E66"/>
+      </g></svg>`;
+  }
+  function photo(src, view) {
+    if (!src) return null;
+    if (src.startsWith("s:")) return teeth(parseFloat(src.slice(2)), view);
+    return `<img src="${src}" alt="Tray photo, ${view}">`;
+  }
+
+  // ---------- screens ----------
+  function head(eyebrow, title, right = '<span class="tag">Example data</span>') {
+    return `<header class="top"><div><p class="eyebrow">${eyebrow}</p><h1>${title}</h1></div>${right}</header>`;
+  }
+
+  function vToday() {
+    const t = trayInfo(), used = outToday(), b = budget(), left = b - used;
+    const frac = Math.min(1, used / b), isOut = S.outSince != null;
+    const col = used > b ? "var(--bad)" : frac > .75 ? "var(--warn)" : "var(--accent)";
+    const R = 86, C = 2 * Math.PI * R;
+    const projected = 24 * 60 - used - (isOut ? 0 : 0);
+    const center = isOut
+      ? `<span class="ring-big">${mmss((nowMin() - S.outSince) * 60)}</span><span class="ring-sub">trays out</span>`
+      : left >= 0
+        ? `<span class="ring-big">${hm(left)}</span><span class="ring-sub">out-time left today to stay at ${S.plan.goal}h</span>`
+        : `<span class="ring-big" style="color:var(--bad)">−${hm(-left)}</span><span class="ring-sub">over today's out budget</span>`;
+    const sinceIn = S.out.length ? nowMin() - S.out[S.out.length - 1].e : nowMin();
+    const st = streak(), onTrack = 24 - used / 60 >= S.plan.goal;
+
+    // week chart: last 6 days + today projected
+    const days = S.history.slice(-6).map((h, i) => ({ h, d: addDays(TODAY, i - 6) }));
+    days.push({ h: projected / 60, d: TODAY, today: true });
+    const W = 300, H = 120, top = 16, bot = 22, lo = 18, hi = 24;
+    const y = v => top + (H - top - bot) * (1 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo));
+    const bw = 26, gap = (W - 20 - bw * 7) / 6;
+    let bars = "";
+    days.forEach((o, i) => {
+      const x = 10 + i * (bw + gap), yy = y(o.h), ok = o.h >= S.plan.goal;
+      const fill = o.today ? "var(--accent-soft)" : ok ? "var(--accent)" : "var(--warn)";
+      bars += `<rect x="${x}" y="${yy}" width="${bw}" height="${H - bot - yy}" rx="4" fill="${fill}" ${o.today ? 'stroke="var(--accent)" stroke-dasharray="3 3"' : ""}/>
+        <text x="${x + bw / 2}" y="${yy - 4}" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="var(--font-n)">${o.h.toFixed(1)}</text>
+        <text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle" font-size="10" fill="${o.today ? "var(--ink)" : "var(--muted)"}" font-weight="${o.today ? 700 : 400}">${o.today ? "Today" : fmt(o.d, { weekday: "narrow" })}</text>`;
+    });
+    const gy = y(S.plan.goal);
+    const chart = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Hours worn per day, last 7 days">
+      <line x1="0" x2="${W}" y1="${gy}" y2="${gy}" stroke="var(--ink)" stroke-opacity=".35" stroke-dasharray="4 4"/>
+      <text x="${W}" y="${gy - 4}" text-anchor="end" font-size="9.5" fill="var(--muted)">${S.plan.goal}h goal</text>${bars}</svg>`;
+
+    const entries = S.out.map((o, i) => {
+      const d = o.e - o.s;
+      return `<button class="entry" type="button" data-act="edit-entry" data-i="${i}"><span><b>${esc(o.label)}</b><span class="muted small num"> · ${clock(o.s)}–${clock(o.e)}</span></span><span class="dur ${d > S.rem.outMin ? "over" : ""}">${hm(d)}</span></button>`;
+    }).join("") + (isOut ? `<div class="entry" style="cursor:default"><span><b>Out now</b><span class="muted small num"> · since ${clock(S.outSince)}</span></span><span class="dur over">${hm(nowMin() - S.outSince)}</span></div>` : "");
+
+    const playful = $("#app").dataset.skin === "playful";
+    const badges = playful ? `<section class="card"><div class="card-head"><h3>Badges</h3><span class="muted small">3 of 8</span></div>
+      <div class="badges">
+        <div class="badge"><div class="medal">1</div>First tray</div>
+        <div class="badge"><div class="medal">7</div>7-day streak</div>
+        <div class="badge"><div class="medal">0</div>No-snack day</div>
+        <div class="badge locked"><div class="medal">14</div>14-day streak</div>
+        <div class="badge locked"><div class="medal">¼</div>Quarter way</div>
+      </div></section>` : "";
+
+    return head(fmt(TODAY, { weekday: "long", month: "short", day: "numeric" }), "Today") + `
+      <section class="card hero">
+        <div class="ring">
+          <svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="${R}" fill="none" stroke="var(--surface-2)" stroke-width="14"/>
+          <circle cx="100" cy="100" r="${R}" fill="none" stroke="${col}" stroke-width="14" stroke-linecap="round" stroke-dasharray="${C * frac} ${C}"/></svg>
+          <div class="ring-c">${center}</div>
+        </div>
+        <span class="state ${isOut ? "out" : ""}"><span class="dot"></span>${isOut ? "Trays out · brush before they go back in" : `Trays in · ${hm(sinceIn)} since ${S.out.length ? esc(S.out[S.out.length - 1].label.toLowerCase()) : "midnight"}`}</span>
+        <button class="btn big-btn" type="button" id="toggle-out" data-act="toggle-out">${isOut ? "Trays back in" : "Trays out"}</button>
+        <span class="proj">Out today <b class="num">${hm(used)}</b> of ${hm(b)} · projected wear <b class="num">${hm(projected)}</b></span>
+      </section>
+      <div class="row2">
+        <section class="card" style="gap:8px">
+          <span class="eyebrow">Tray</span>
+          <div><span class="stat-big">${t.n}</span><span class="muted num"> / ${S.plan.total}</span></div>
+          <div class="daydots">${Array.from({ length: S.plan.days }, (_, i) => `<i class="${i < t.day - 1 ? "on" : i === t.day - 1 ? "now" : ""}"></i>`).join("")}</div>
+          <span class="small muted">Day ${t.day} of ${S.plan.days} · swap ${fmt(t.swap, { weekday: "short" })}</span>
+        </section>
+        <section class="card" style="gap:8px">
+          <span class="eyebrow">Streak</span>
+          <div style="display:flex;align-items:center;gap:6px"><span class="stat-big">${st}</span>${playful ? `<span class="flame">${I.flame}</span>` : `<span class="muted small">days</span>`}</div>
+          <span class="small muted">${st} days at ${S.plan.goal}h+${onTrack ? " · today on track" : " · today at risk"}</span>
+        </section>
+      </div>
+      <section class="card"><div class="card-head"><h3>Last 7 days</h3><span class="muted small num">avg ${(days.slice(0, 6).reduce((a, o) => a + o.h, 0) / 6).toFixed(1)}h</span></div>${chart}</section>
+      <section class="card"><div class="card-head"><h3>Out log</h3><button class="btn link" type="button" data-act="add-entry">Add entry</button></div><div class="entries">${entries || '<p class="muted small">No time out yet today.</p>'}</div></section>
+      ${badges}`;
+  }
+
+  function vTrays() {
+    const t = trayInfo(), pct = Math.round((t.n - 1 + t.day / S.plan.days) / S.plan.total * 100);
+    const tiles = Array.from({ length: S.plan.total }, (_, i) => {
+      const n = i + 1, d = addDays(t.start, i * S.plan.days);
+      const cls = n < t.n ? "done" : n === t.n ? "cur" : "";
+      return `<button type="button" class="tile ${cls}" data-act="tray" data-n="${n}" aria-label="Tray ${n}, starts ${fmt(d)}"><b>${n}</b><span>${fmt(d, { month: "short", day: "numeric" })}</span></button>`;
+    }).join("");
+    const swapLabel = t.daysToSwap === 0 ? "today" : t.daysToSwap === 1 ? "tomorrow" : `in ${t.daysToSwap} days`;
+    return head("Treatment plan", "Trays") + `
+      <section class="card">
+        <div class="card-head"><div><span class="eyebrow">Now wearing</span><div><span class="stat-big">Tray ${t.n}</span></div></div><span class="tag">${pct}% done</span></div>
+        <div class="progress"><i style="width:${pct}%"></i></div>
+        <div class="card-head small"><span class="muted">Started ${fmt(t.start, { month: "short", day: "numeric" })}</span><span class="muted">Est. finish ${fmt(t.end, { month: "short", day: "numeric", year: "numeric" })}</span></div>
+      </section>
+      <section class="card">
+        <div class="card-head"><h3>Next swap: tray ${Math.min(t.n + 1, S.plan.total)}</h3><span class="tag">${swapLabel}</span></div>
+        <p class="small muted" style="margin:0">${fmt(t.swap, { weekday: "long", month: "long", day: "numeric" })}, reminder at ${S.rem.swapAt}. Swap before bed so the tightest hours happen while you sleep.</p>
+        <div style="display:grid;gap:10px">${S.checklist.map((c, i) => `<label class="check ${c.d ? "done" : ""}"><input type="checkbox" id="chk-${i}" data-act="chk" data-i="${i}" ${c.d ? "checked" : ""}><span>${esc(c.t)}</span></label>`).join("")}</div>
+      </section>
+      <section class="card"><div class="card-head"><h3>All ${S.plan.total} trays</h3><span class="muted small">${S.plan.days} days each</span></div><div class="tiles">${tiles}</div></section>`;
+  }
+
+  function vPhotos() {
+    const t = trayInfo(), views = ["front", "left", "right"];
+    const rows = [];
+    for (let n = t.n; n >= 1; n--) {
+      const p = S.photos[n] || {};
+      const missing = views.filter(v => !p[v]).length;
+      rows.push(`<section class="card"><div class="card-head"><h3>Tray ${n}</h3>${missing ? `<span class="tag">${missing} to take</span>` : `<span class="muted small">${fmt(addDays(t.start, (n - 1) * S.plan.days), { month: "short", day: "numeric" })}</span>`}</div>
+        <div class="shots">${views.map(v => {
+          const img = photo(p[v], v);
+          return `<label class="shot ${img ? "has" : ""}" for="ph-${n}-${v}">${img ? img + `<span class="lbl">${v}</span>` : `<span class="add">${I.plus}${v[0].toUpperCase() + v.slice(1)}</span>`}<input type="file" accept="image/*" id="ph-${n}-${v}" data-act="photo" data-n="${n}" data-v="${v}" aria-label="Tray ${n} ${v} photo"></label>`;
+        }).join("")}</div></section>`);
+    }
+    const first = S.photos[1] && S.photos[1].front, last = (S.photos[t.n] && S.photos[t.n].front) || first;
+    return head("Progress", "Photos") + `
+      <section class="card">
+        <div class="card-head"><h3>Tray 1 vs tray ${t.n}</h3><span class="muted small">Drag to compare</span></div>
+        <div class="compare" id="compare" style="--split:50%">
+          <div class="layer">${photo(first, "front")}</div>
+          <div class="layer after">${photo(last, "front")}</div>
+          <div class="bar"></div>
+          <span class="cap" style="left:8px">Tray 1</span><span class="cap" style="right:8px">Tray ${t.n}</span>
+          <input type="range" min="0" max="100" value="50" id="split" data-act="split" aria-label="Before and after split">
+        </div>
+        <p class="small muted" style="margin:0">Same spot, same light, lips pulled back with your fingers. Use the front photo for comparisons.</p>
+      </section>
+      ${rows.join("")}`;
+  }
+
+  function vDentist() {
+    const ad = parseDate(S.appt.date), dd = daysBetween(TODAY, ad);
+    const sym = S.symptoms.map(s => `<div class="sym"><span><b>${esc(s.type)}</b> <span class="muted small">· ${fmt(parseDate(s.date), { month: "short", day: "numeric" })} · tray ${trayFor(parseDate(s.date))}</span></span>
+      <span class="sev ${s.sev >= 4 ? "hi" : ""}" aria-label="Severity ${s.sev} of 5">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= s.sev ? "on" : ""}"></i>`).join("")}</span>
+      ${s.note ? `<span class="small muted" style="grid-column:1/-1">${esc(s.note)}</span>` : ""}</div>`).join("");
+    const open = S.questions.filter(q => !q.d).length;
+    return head("Orthodontist", "Dentist") + `
+      <section class="card appt">
+        <span class="eyebrow" style="color:inherit;opacity:.8">Next appointment</span>
+        <div class="appt-row"><div><div style="font-weight:700;font-size:17px">${fmt(ad, { weekday: "long", month: "long", day: "numeric" })}</div><div class="muted small">${S.appt.time} · ${esc(S.appt.what)}</div></div>
+        <div style="text-align:right"><div class="stat-big">${dd}</div><div class="muted small">days</div></div></div>
+      </section>
+      <section class="card">
+        <div class="card-head"><h3>Questions to ask</h3><span class="tag">${open} open</span></div>
+        <div style="display:grid;gap:10px">${S.questions.map((q, i) => `<label class="check ${q.d ? "done" : ""}"><input type="checkbox" id="q-${i}" data-act="q" data-i="${i}" ${q.d ? "checked" : ""}><span>${esc(q.t)}</span></label>`).join("")}</div>
+        <form class="addrow" data-act="add-q"><input id="new-q" placeholder="Add a question" autocomplete="off"><button class="btn" type="submit">Add</button></form>
+      </section>
+      <section class="card">
+        <div class="card-head"><h3>Symptoms</h3><button class="btn link" type="button" data-act="add-sym">Log symptom</button></div>
+        <div>${sym}</div>
+      </section>
+      <section class="card">
+        <div class="card-head"><h3>Visit notes</h3><button class="btn link" type="button" data-act="toast" data-msg="Visit notes editor comes in v1">Add visit</button></div>
+        <div>${S.visits.map(v => `<div class="visit"><div class="card-head"><b>${fmt(parseDate(v.date), { month: "short", day: "numeric", year: "numeric" })}</b><span class="chips">${v.tags.map(t => `<span class="chip static">${t}</span>`).join("")}</span></div><span class="small">${esc(v.note)}</span></div>`).join("")}</div>
+      </section>`;
+  }
+  function trayFor(d) { return Math.max(1, Math.min(S.plan.total, Math.floor(daysBetween(parseDate(S.plan.start), d) / S.plan.days) + 1)); }
+
+  function vSettings() {
+    const r = S.rem;
+    const rem = (key, title, desc, extra) => `<div class="rem"><span><span class="t" style="font-weight:600">${title}</span><span class="d small muted" style="display:block">${desc}</span></span><input type="checkbox" class="toggle" id="rem-${key}" data-act="rem" data-k="${key}" ${r[key] ? "checked" : ""} aria-label="${title}">
+      <span style="grid-column:1/-1;display:flex;gap:10px;align-items:center">${extra || ""}<button class="btn link small" type="button" data-act="preview" data-k="${key}">Preview</button></span></div>`;
+    return head("Preferences", "Settings", "") + `
+      <section class="card">
+        <h3>Treatment plan</h3>
+        <div>
+          <div class="set"><label for="s-total">Trays in plan<span class="d">Change it after refinements</span></label><input type="number" id="s-total" min="1" max="99" value="${S.plan.total}" data-act="plan" data-k="total"></div>
+          <div class="set"><label for="s-days">Days per tray</label><select id="s-days" data-act="plan" data-k="days">${[5, 7, 10, 14].map(d => `<option ${d === S.plan.days ? "selected" : ""}>${d}</option>`).join("")}</select></div>
+          <div class="set"><label for="s-start">Tray 1 started</label><input type="date" id="s-start" value="${S.plan.start}" data-act="plan" data-k="start"></div>
+          <div class="set"><label for="s-goal">Daily wear goal<span class="d">Sets your out budget</span></label><select id="s-goal" data-act="plan" data-k="goal">${[20, 21, 22].map(g => `<option value="${g}" ${g === S.plan.goal ? "selected" : ""}>${g} hours</option>`).join("")}</select></div>
+        </div>
+      </section>
+      <section class="card">
+        <h3>Reminders</h3>
+        <div>
+          ${rem("outLong", "Trays out too long", `Nudge after ${r.outMin} minutes out`, `<select id="s-outmin" data-act="outmin" style="width:auto">${[15, 30, 45, 60].map(m => `<option value="${m}" ${m === r.outMin ? "selected" : ""}>${m} min</option>`).join("")}</select>`)}
+          ${rem("swap", "Swap day", "Morning of each tray change", `<input type="time" id="s-swapat" value="${r.swapAt}" data-act="swapat" style="width:auto">`)}
+          ${rem("photo", "Photo day", "Paired with each swap")}
+          ${rem("appt", "Appointment", "The day before, with your open questions")}
+        </div>
+        <p class="small muted" style="margin:0">On iPhone, reminders work after you add Aligned to your Home Screen.</p>
+      </section>
+      <section class="card">
+        <h3>Your data</h3>
+        <p class="small muted" style="margin:0">Stored on this phone only. No account, nothing uploaded.</p>
+        <button class="btn ghost" type="button" data-act="toast" data-msg="Backup export comes in v1">Export a backup</button>
+      </section>`;
+  }
+
+  // ---------- sheets ----------
+  function sheet() {
+    const o = $("#overlay"), sh = S.sheet;
+    if (!sh) { o.innerHTML = ""; return; }
+    let body = "";
+    if (sh.kind === "entry") {
+      const e = sh.i != null ? S.out[sh.i] : { s: Math.floor(nowMin()) - 30, e: Math.floor(nowMin()), label: "Snack" };
+      body = `<h2>${sh.i != null ? "Edit time out" : "Add time out"}</h2>
+        <form id="entry-form" style="display:grid;gap:14px">
+        <label class="flabel">What for<select id="f-label">${["Breakfast", "Lunch", "Dinner", "Snack", "Coffee", "Cleaning", "Other"].map(l => `<option ${l === e.label ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+        <div class="fgrid"><label class="flabel">Out<input type="time" id="f-s" value="${clock(e.s)}" required></label><label class="flabel">Back in<input type="time" id="f-e" value="${clock(e.e)}" required></label></div>
+        <div class="sheet-actions">${sh.i != null ? `<button type="button" class="btn danger" data-act="del-entry">Delete</button>` : `<button type="button" class="btn ghost" data-act="close">Cancel</button>`}<button type="submit" class="btn">Save</button></div></form>`;
+    } else if (sh.kind === "sym") {
+      const d = S.symDraft;
+      body = `<h2>Log a symptom</h2>
+        <div class="chips" role="group" aria-label="Type">${["Soreness", "Rubbing", "Tight fit", "Broken attachment", "Tray cracked", "Other"].map(t => `<button type="button" class="chip" data-act="sym-type" data-v="${t}" aria-pressed="${t === d.type}">${t}</button>`).join("")}</div>
+        <div class="flabel">How bad, 1 to 5<div class="chips">${[1, 2, 3, 4, 5].map(n => `<button type="button" class="chip num" data-act="sym-sev" data-v="${n}" aria-pressed="${n === d.sev}">${n}</button>`).join("")}</div></div>
+        <label class="flabel">Where, or what happened<textarea id="f-note" placeholder="e.g. upper right, attachment on the canine came off"></textarea></label>
+        <div class="sheet-actions"><button type="button" class="btn ghost" data-act="close">Cancel</button><button type="button" class="btn" data-act="save-sym">Save</button></div>`;
+    } else if (sh.kind === "tray") {
+      const t = trayInfo(), n = sh.n, st = addDays(t.start, (n - 1) * S.plan.days);
+      const state = n < t.n ? "Done" : n === t.n ? `Wearing now, day ${t.day}` : "Upcoming";
+      body = `<h2>Tray ${n}</h2>
+        <p class="muted small" style="margin:0">${fmt(st, { month: "short", day: "numeric" })} – ${fmt(addDays(st, S.plan.days - 1), { month: "short", day: "numeric" })} · ${state}</p>
+        ${n <= t.n ? `<div class="row2"><div><span class="eyebrow">Avg wear</span><div class="stat-big" style="font-size:26px">${n === 1 ? "22.4h" : "22.6h"}</div></div><div><span class="eyebrow">Photos</span><div class="stat-big" style="font-size:26px">${Object.values(S.photos[n] || {}).filter(Boolean).length}/3</div></div></div>` : ""}
+        <label class="flabel">Notes for this tray<textarea id="f-traynote" placeholder="How did it fit? Anything to tell your orthodontist?">${esc(S.trayNotes[n] || "")}</textarea></label>
+        <div class="sheet-actions"><button type="button" class="btn ghost" data-act="close">Close</button><button type="button" class="btn" data-act="save-tray" data-n="${n}">Save note</button></div>`;
+    }
+    o.innerHTML = `<div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>${body}</div>`;
+    const first = o.querySelector("select, input, textarea, button.chip");
+    if (first) first.focus({ preventScroll: true });
+  }
+
+  // ---------- notifications / confetti ----------
+  let notifTimer;
+  function notify(title, text) {
+    let n = $("#notif");
+    if (!n) { n = document.createElement("div"); n.id = "notif"; n.className = "notif"; n.setAttribute("role", "status"); $("#app").appendChild(n); }
+    n.innerHTML = `<div class="ico">${I.dentist.replace('stroke-width="1.8"', 'stroke-width="2" width="20" height="20"')}</div><div><b>${title}</b><span>${text}</span></div>`;
+    n.hidden = false; n.style.animation = "none"; n.offsetHeight; n.style.animation = "";
+    clearTimeout(notifTimer); notifTimer = setTimeout(() => { n.hidden = true; }, 4200);
+  }
+  const PREVIEW = {
+    outLong: () => ["Aligned · now", `Trays out ${S.rem.outMin} min. Brush, rinse, put them back in.`],
+    swap: () => { const t = trayInfo(); return ["Aligned · " + S.rem.swapAt, `Swap day: tray ${t.n + 1} goes in tonight. Keep tray ${t.n} as a backup.`]; },
+    photo: () => ["Aligned · " + S.rem.swapAt, "Photo day. Take front, left and right before the new tray."],
+    appt: () => { const q = S.questions.filter(x => !x.d).length; return ["Aligned · 6:00 PM", `Orthodontist tomorrow at ${S.appt.time}. You have ${q} question${q === 1 ? "" : "s"} to ask.`]; },
+  };
+  function confetti() {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const c = $("#confetti"), app = $("#app"), ctx = c.getContext("2d");
+    c.hidden = false; c.width = app.clientWidth * 2; c.height = app.clientHeight * 2;
+    const cs = getComputedStyle(app), cols = ["--accent", "--accent-2", "--good"].map(v => cs.getPropertyValue(v).trim());
+    const P = Array.from({ length: 90 }, () => ({ x: c.width / 2, y: c.height * .42, vx: (Math.random() - .5) * 26, vy: -Math.random() * 26 - 6, r: Math.random() * 6 + 4, c: cols[Math.floor(Math.random() * 3)], a: Math.random() * 6 }));
+    let f = 0;
+    (function step() {
+      ctx.clearRect(0, 0, c.width, c.height);
+      P.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .9; p.a += .2; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r); ctx.restore(); });
+      if (++f < 80) requestAnimationFrame(step); else c.hidden = true;
+    })();
+  }
+  function toast(msg) { notify("Prototype", msg); }
+
+  // ---------- render ----------
+  const VIEWS = { today: vToday, trays: vTrays, photos: vPhotos, dentist: vDentist, settings: vSettings };
+  function render(keepScroll) {
+    const sc = $("#screen"), top = sc.scrollTop;
+    sc.innerHTML = VIEWS[S.tab]();
+    if (keepScroll) sc.scrollTop = top; else sc.scrollTop = 0;
+    $("#tabbar").innerHTML = TABS.map(([k, l]) => `<button type="button" class="tab" id="tab-${k}" data-act="tab" data-k="${k}" ${S.tab === k ? 'aria-current="page"' : ""}>${I[k]}${l}</button>`).join("");
+    $("#clock").textContent = clock(nowMin());
+  }
+
+  // ---------- events ----------
+  const app = $("#app");
+  app.addEventListener("click", e => {
+    const el = e.target.closest("[data-act]"); if (!el) return;
+    const a = el.dataset.act;
+    if (a === "tab") { S.tab = el.dataset.k; render(); }
+    else if (a === "toggle-out") {
+      if (S.outSince == null) { S.outSince = nowMin(); S.nudged = false; }
+      else {
+        const s = S.outSince, en = nowMin(); S.outSince = null;
+        const h = clock(s).split(":")[0] * 1;
+        S.out.push({ s: Math.floor(s), e: Math.max(Math.floor(s) + 1, Math.floor(en)), label: h < 11 ? "Breakfast" : h < 16 ? "Lunch" : h < 21 ? "Dinner" : "Snack" });
+        if (app.dataset.skin === "playful" && outToday() <= budget()) confetti();
+      }
+      render(true);
+    }
+    else if (a === "edit-entry") { S.sheet = { kind: "entry", i: +el.dataset.i }; sheet(); }
+    else if (a === "add-entry") { S.sheet = { kind: "entry", i: null }; sheet(); }
+    else if (a === "del-entry") { S.out.splice(S.sheet.i, 1); S.sheet = null; sheet(); render(true); }
+    else if (a === "close") { S.sheet = null; sheet(); }
+    else if (a === "tray") { S.sheet = { kind: "tray", n: +el.dataset.n }; sheet(); }
+    else if (a === "save-tray") { S.trayNotes[el.dataset.n] = $("#f-traynote").value; S.sheet = null; sheet(); toast("Note saved for tray " + el.dataset.n); }
+    else if (a === "add-sym") { S.symDraft = { type: "Soreness", sev: 2 }; S.sheet = { kind: "sym" }; sheet(); }
+    else if (a === "sym-type") { S.symDraft.type = el.dataset.v; el.parentElement.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c === el)); }
+    else if (a === "sym-sev") { S.symDraft.sev = +el.dataset.v; el.parentElement.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", c === el)); }
+    else if (a === "save-sym") { S.symptoms.unshift({ date: isoDate(TODAY), type: S.symDraft.type, sev: S.symDraft.sev, note: $("#f-note").value.trim() }); S.sheet = null; sheet(); render(true); }
+    else if (a === "preview") { const [t, m] = PREVIEW[el.dataset.k](); notify(t, m); }
+    else if (a === "toast") { toast(el.dataset.msg); }
+  });
+  app.addEventListener("change", e => {
+    const el = e.target, a = el.dataset.act; if (!a) return;
+    if (a === "chk") { S.checklist[+el.dataset.i].d = el.checked; render(true); }
+    else if (a === "q") { S.questions[+el.dataset.i].d = el.checked; render(true); }
+    else if (a === "rem") { S.rem[el.dataset.k] = el.checked; }
+    else if (a === "outmin") { S.rem.outMin = +el.value; render(true); }
+    else if (a === "swapat") { S.rem.swapAt = el.value; }
+    else if (a === "plan") {
+      const k = el.dataset.k;
+      if (k === "start") { if (el.value) S.plan.start = el.value; }
+      else { const v = parseInt(el.value, 10); if (v > 0) S.plan[k] = Math.min(99, v); }
+      render(true);
+    }
+    else if (a === "photo" && el.files && el.files[0]) {
+      const r = new FileReader();
+      r.onload = () => { S.photos[el.dataset.n] = S.photos[el.dataset.n] || {}; S.photos[el.dataset.n][el.dataset.v] = r.result; render(true); };
+      r.readAsDataURL(el.files[0]);
+    }
+  });
+  app.addEventListener("input", e => {
+    if (e.target.dataset.act === "split") $("#compare").style.setProperty("--split", e.target.value + "%");
+  });
+  app.addEventListener("submit", e => {
+    e.preventDefault();
+    const f = e.target;
+    if (f.id === "entry-form") {
+      let s = toMin($("#f-s").value), en = toMin($("#f-e").value);
+      if (en <= s) en = s + 1;
+      const item = { s, e: en, label: $("#f-label").value };
+      if (S.sheet.i != null) S.out[S.sheet.i] = item; else S.out.push(item);
+      S.out.sort((a, b) => a.s - b.s);
+      S.sheet = null; sheet(); render(true);
+    } else if (f.dataset.act === "add-q") {
+      const v = $("#new-q").value.trim(); if (!v) return;
+      S.questions.unshift({ t: v, d: false }); render(true); $("#new-q").focus();
+    }
+  });
+  app.addEventListener("keydown", e => { if (e.key === "Escape" && S.sheet) { S.sheet = null; sheet(); } });
+
+  // skins
+  const DESC = {
+    clinical: "Calm and trustworthy, like a health app your orthodontist would recommend. Cool white, teal accents, mono numerals for times.",
+    playful: "Built to keep you going. Rounded shapes, bubblegum and sunshine colors, a streak flame, badges, and confetti when trays go back in on budget.",
+    minimal: "A data-first fitness-tracker look. Monochrome, monospaced, no decoration. Color appears only to flag a problem.",
+  };
+  function setSkin(k) {
+    app.dataset.skin = k;
+    document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.skin === k));
+    $("#skin-desc").textContent = DESC[k];
+    try { localStorage.setItem("aligned-skin", k); } catch (_) {}
+    render(true);
+  }
+  document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => setSkin(b.dataset.skin)));
+  $("#jump").addEventListener("click", () => { jump += 10; render(true); });
+  $("#reset").addEventListener("click", () => { const tab = S.tab; S = freshState(); S.tab = tab; jump = 0; simT0 = Date.now(); sheet(); render(); });
+
+  // tick
+  setInterval(() => {
+    $("#clock").textContent = clock(nowMin());
+    if (S.outSince != null) {
+      if (S.tab === "today" && !S.sheet) render(true);
+      if (S.rem.outLong && !S.nudged && nowMin() - S.outSince >= S.rem.outMin) { S.nudged = true; const [t, m] = PREVIEW.outLong(); notify(t, m); }
+    }
+  }, 1000);
+
+  let saved = "clinical";
+  try { saved = localStorage.getItem("aligned-skin") || "clinical"; } catch (_) {}
+  setSkin(DESC[saved] ? saved : "clinical");
+})();
+</script>
